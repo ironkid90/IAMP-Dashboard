@@ -1,0 +1,8 @@
+{
+  "name": "iamp-sites-mapping-dashboard",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  }
+}

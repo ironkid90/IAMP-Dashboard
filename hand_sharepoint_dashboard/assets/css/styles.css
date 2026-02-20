@@ -1,0 +1,294 @@
+:root{
+  --kpi-value-size: 1.75rem;
+  --kpi-label-color: rgba(0,0,0,.55);
+  --sidebar-max: calc(100vh - 56px);
+
+  /* Visual identity */
+  --brand-accent: rgba(13,110,253,.95); /* bootstrap primary */
+  --brand-accent-2: rgba(32,201,151,.95); /* bootstrap teal */
+}
+
+[data-bs-theme="dark"]{
+  --kpi-label-color: rgba(255,255,255,.65);
+}
+
+.brand-mark{
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(13,110,253,.15), rgba(25,135,84,.15));
+}
+
+.sidebar{
+  max-height: var(--sidebar-max);
+  overflow: auto;
+  position: sticky;
+  top: 56px;
+}
+
+.kpi-card{
+  border: 1px solid rgba(0,0,0,.08);
+  background: radial-gradient(1200px 200px at 20% 0%, rgba(13,110,253,.10), transparent 40%),
+              radial-gradient(800px 180px at 90% 0%, rgba(25,135,84,.08), transparent 35%);
+}
+
+[data-bs-theme="dark"] .kpi-card{
+  border-color: rgba(255,255,255,.10);
+}
+
+.kpi-label{
+  font-size: .82rem;
+  color: var(--kpi-label-color);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.kpi-value{
+  font-weight: 700;
+  font-size: var(--kpi-value-size);
+  line-height: 1.1;
+  margin-top: .2rem;
+}
+
+.kpi-sub{
+  margin-top: .25rem;
+  font-size: .85rem;
+  color: rgba(0,0,0,.6);
+}
+
+[data-bs-theme="dark"] .kpi-sub{
+  color: rgba(255,255,255,.7);
+}
+
+.chart-card .card-header{
+  background: transparent;
+  position: relative;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+
+[data-bs-theme="dark"] .chart-card .card-header{
+  border-bottom-color: rgba(255,255,255,.10);
+}
+
+.chart-card .card-header::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(13,110,253,.55), rgba(32,201,151,.45), rgba(102,16,242,.35));
+  opacity: .55;
+}
+
+.loading-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+.loading-card{
+  background: var(--bs-body-bg);
+  border: 1px solid rgba(0,0,0,.1);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  min-width: 280px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+}
+
+[data-bs-theme="dark"] .loading-card{
+  border-color: rgba(255,255,255,.12);
+}
+
+.tabulator{
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,.10);
+}
+
+[data-bs-theme="dark"] .tabulator{
+  border-color: rgba(255,255,255,.12);
+}
+
+.tabulator .tabulator-header{
+  border-bottom: 1px solid rgba(0,0,0,.10);
+}
+
+[data-bs-theme="dark"] .tabulator .tabulator-header{
+  border-bottom-color: rgba(255,255,255,.12);
+}
+
+/* Make tabulator match bootstrap body background */
+.tabulator,
+.tabulator .tabulator-header,
+.tabulator .tabulator-tableHolder,
+.tabulator .tabulator-footer{
+  background-color: var(--bs-body-bg);
+}
+
+/* Slightly tighter header row */
+.tabulator .tabulator-header .tabulator-col{
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* Improve small screens */
+@media (max-width: 991.98px){
+  .sidebar{
+    position: relative;
+    top: 0;
+    max-height: none;
+  }
+}
+
+
+/* ---- Global background polish ---- */
+body{
+  background:
+    radial-gradient(1200px 520px at 18% -12%, rgba(13,110,253,.11), transparent 55%),
+    radial-gradient(900px 420px at 92% -14%, rgba(32,201,151,.12), transparent 60%),
+    radial-gradient(1200px 620px at 50% 120%, rgba(102,16,242,.06), transparent 62%);
+  background-attachment: fixed;
+}
+
+/* Subtle texture overlay */
+body::before{
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(0,0,0,.06) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: .25;
+}
+
+[data-bs-theme="dark"] body{
+  background:
+    radial-gradient(1100px 420px at 20% -10%, rgba(13,110,253,.18), transparent 55%),
+    radial-gradient(900px 360px at 90% -10%, rgba(32,201,151,.12), transparent 60%),
+    radial-gradient(1000px 520px at 50% 110%, rgba(102,16,242,.10), transparent 60%);
+}
+
+[data-bs-theme="dark"] body::before{
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,.06) 1px, transparent 1px);
+  opacity: .18;
+}
+
+/* Glassy navbar */
+.navbar.bg-body-tertiary{
+  background-color: color-mix(in srgb, var(--bs-body-bg) 78%, transparent) !important;
+  backdrop-filter: blur(10px);
+}
+
+.card{
+  border-radius: 14px;
+}
+
+.card{
+  border-color: rgba(0,0,0,.08);
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+}
+
+[data-bs-theme="dark"] .card{
+  border-color: rgba(255,255,255,.12);
+}
+
+.card:hover{
+  transform: translateY(-1px);
+}
+
+.chart-card, .kpi-card, .map-card{
+  box-shadow: 0 10px 30px rgba(0,0,0,.06);
+}
+
+.map-card{ overflow: hidden; }
+
+[data-bs-theme="dark"] .chart-card,
+[data-bs-theme="dark"] .kpi-card,
+[data-bs-theme="dark"] .map-card{
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+/* ---- Map ---- */
+.map-container{
+  height: 560px;
+  min-height: 380px;
+}
+
+@media (max-width: 576px){
+  .map-container{ height: 420px; }
+}
+
+#lebanonMap{
+  width: 100%;
+}
+
+/* Improve Leaflet controls contrast */
+#lebanonMap .leaflet-control{
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#lebanonMap .leaflet-control-attribution{
+  font-size: 11px;
+}
+
+.map-empty-hint{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.70));
+}
+
+[data-bs-theme="dark"] .map-empty-hint{
+  background: linear-gradient(180deg, rgba(33,37,41,.92), rgba(33,37,41,.70));
+}
+
+.map-legend{
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+
+.map-legend-item{
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.map-swatch{
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.15);
+  box-shadow: 0 2px 6px rgba(0,0,0,.10);
+}
+
+[data-bs-theme="dark"] .map-swatch{
+  border-color: rgba(255,255,255,.18);
+}
+
+.map-dot{
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  display: inline-block;
+  border: 2px solid rgba(255,255,255,.95);
+  box-shadow: 0 2px 8px rgba(0,0,0,.28);
+}
+
+.map-card .card-body{ position: relative; }

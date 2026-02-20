@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IAMP Sites Mapping Dashboard</title>
+
+  <!-- Bootstrap + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- Tabulator (table) -->
+  <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.2.1/dist/css/tabulator.min.css" rel="stylesheet">
+
+  <!-- Leaflet (map) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin=""/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin=""/>
+
+  <!-- Custom styles -->
+  <link href="assets/css/styles.css" rel="stylesheet" />
+
+  <meta name="description" content="Interactive dashboard for IAMP informal settlements mapping / phone assessment + QC monitoring." />
+</head>
+
+<body>
+  <!-- Top Bar -->
+  <nav class="navbar navbar-expand-lg border-bottom bg-body-tertiary sticky-top">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+        <span class="brand-mark"><i class="bi bi-globe2"></i></span>
+        <span class="fw-semibold">IAMP Sites Mapping</span>
+        <span class="text-body-secondary d-none d-sm-inline">Dashboard</span>
+      </a>
+
+      <div class="d-flex align-items-center gap-2 ms-auto">
+        <div class="d-none d-md-flex align-items-center gap-2">
+          <span class="badge text-bg-light border" id="datasetBadge">No data loaded</span>
+          <span class="small text-body-secondary" id="lastUpdatedText">—</span>
+        </div>
+
+        <button class="btn btn-outline-secondary btn-sm" id="themeToggle" type="button" title="Toggle dark mode">
+          <i class="bi bi-moon-stars"></i>
+        </button>
+
+        <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#dataPanel" aria-controls="dataPanel">
+          <i class="bi bi-database"></i> Data
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Offcanvas: Data Source -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="dataPanel" aria-labelledby="dataPanelLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="dataPanelLabel"><i class="bi bi-database"></i> Data Source</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+
+    <div class="offcanvas-body">
+      <div class="alert alert-info small mb-3">
+        <div class="fw-semibold mb-1">How this dashboard loads data</div>
+        <ul class="mb-0 ps-3">
+          <li>Best: <b>Live</b> (SharePoint via Vercel API).</li>
+          <li>Preferred: <b>Load File</b> (xlsx) exported from the project spreadsheet.</li>
+          <li>Optional: <b>Load URL</b> (direct file link that returns the xlsx).</li>
+          <li>All calculations happen in the browser (the server is only used to fetch the xlsx securely).</li>
+        </ul>
+      </div>
+
+      <div class="card mb-3 border-primary-subtle">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="fw-semibold d-flex align-items-center gap-2">
+              <i class="bi bi-cloud-arrow-down"></i> Live (SharePoint via Vercel)
+            </div>
+            <span class="badge text-bg-light border" id="liveBadge">off</span>
+          </div>
+
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" role="switch" id="liveToggle">
+            <label class="form-check-label" for="liveToggle">Enable live mode</label>
+          </div>
+
+          <div class="small text-body-secondary mt-2">
+            When enabled, the dashboard fetches the latest XLSX from <code>/api/xlsx</code> on this Vercel deployment (no CORS / no manual uploads).
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <button class="btn btn-outline-primary btn-sm" id="testApiBtn" type="button">
+              <i class="bi bi-activity"></i> Test connection
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" id="reloadApiBtn" type="button">
+              <i class="bi bi-arrow-repeat"></i> Reload now
+            </button>
+          </div>
+
+          <div class="small text-body-secondary mt-2" id="apiStatusText">—</div>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="fw-semibold">Load File</div>
+            <span class="text-body-secondary small" id="fileNameHint">—</span>
+          </div>
+          <input class="form-control mt-2" type="file" id="fileInput" accept=".xlsx,.xls" />
+          <div class="form-text">Tip: export the latest spreadsheet to xlsx, then load it here.</div>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="fw-semibold mb-2">Load URL</div>
+          <div class="input-group">
+            <input type="url" class="form-control" id="urlInput" placeholder="https://.../file.xlsx" />
+            <button class="btn btn-outline-primary" id="loadUrlBtn" type="button">Load</button>
+          </div>
+          <div class="form-text">The URL must be directly downloadable (returns the xlsx file).</div>
+
+          <hr class="my-3">
+
+          <div class="d-flex align-items-end gap-2">
+            <div class="flex-grow-1">
+              <label class="form-label mb-1">Auto-refresh</label>
+              <div class="input-group">
+                <input type="number" min="1" step="1" class="form-control" id="refreshMinutes" value="10">
+                <span class="input-group-text">minutes</span>
+              </div>
+            </div>
+            <button class="btn btn-outline-secondary" id="applyRefreshBtn" type="button">
+              Apply
+            </button>
+          </div>
+
+          <div class="mt-2 small text-body-secondary" id="refreshStatus">Auto-refresh: off</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="fw-semibold mb-2">Data Health</div>
+          <div class="small">
+            <div class="d-flex justify-content-between"><span>Last load</span><span id="healthLastLoad">—</span></div>
+            <div class="d-flex justify-content-between"><span>Last success</span><span id="healthLastSuccess">—</span></div>
+            <div class="d-flex justify-content-between"><span>Error count</span><span id="healthErrors">0</span></div>
+          </div>
+          <hr class="my-2">
+          <div class="small text-body-secondary" id="healthMessage">Waiting for data…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="container-fluid">
+    <div class="row g-0">
+      <!-- Sidebar: Filters -->
+      <aside class="col-12 col-lg-3 col-xxl-2 border-end bg-body sidebar">
+        <div class="p-3">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="fw-semibold"><i class="bi bi-funnel"></i> Filters</div>
+            <button class="btn btn-sm btn-outline-secondary" id="resetFiltersBtn" type="button">
+              Reset
+            </button>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small mb-1">Search (PCode / Local Name)</label>
+            <input class="form-control" id="searchInput" placeholder="Type to filter…" />
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small mb-1">District</label>
+            <select class="form-select" id="districtFilter"></select>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small mb-1">Cadaster</label>
+            <select class="form-select" id="cadasterFilter"></select>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small mb-1">Site Status</label>
+            <select class="form-select" id="siteStatusFilter"></select>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small mb-1">Phone Call Status</label>
+            <select class="form-select" id="phoneStatusFilter"></select>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small mb-1">QC</label>
+            <select class="form-select" id="qcFilter"></select>
+          </div>
+
+          <hr class="my-3">
+
+          <div class="d-grid gap-2">
+            <button class="btn btn-outline-primary" id="downloadFilteredBtn" type="button">
+              <i class="bi bi-download"></i> Export filtered CSV
+            </button>
+          </div>
+
+          <div class="mt-3 small text-body-secondary">
+            <div class="fw-semibold mb-1">Notes</div>
+            <ul class="ps-3 mb-0">
+              <li>“Not assessed” = no phone call status yet.</li>
+              <li>Active site totals (HH/IND/structures) are shown only where populated in the sheet.</li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="col-12 col-lg-9 col-xxl-10">
+        <div class="p-3 p-lg-4">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+              <h1 class="h4 mb-1">Informal Settlements Mapping – Operational View</h1>
+              <div class="text-body-secondary small">
+                Progress, active-site totals, and data-quality monitoring from the latest spreadsheet export.
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-outline-secondary btn-sm" id="loadSampleBtn" type="button" title="Load included sample file">
+                <i class="bi bi-lightning"></i> Load sample
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" id="copyShareLinkBtn" type="button" title="Copy a shareable link with current filters">
+                <i class="bi bi-link-45deg"></i> Share link
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI cards -->
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-xl-3">
+              <div class="card kpi-card">
+                <div class="card-body">
+                  <div class="kpi-label">Total records</div>
+                  <div class="kpi-value" id="kpiTotal">—</div>
+                  <div class="kpi-sub" id="kpiTotalSub">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6 col-xl-3">
+              <div class="card kpi-card">
+                <div class="card-body">
+                  <div class="kpi-label">Assessed</div>
+                  <div class="kpi-value" id="kpiAssessed">—</div>
+                  <div class="kpi-sub" id="kpiAssessedSub">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6 col-xl-3">
+              <div class="card kpi-card">
+                <div class="card-body">
+                  <div class="kpi-label">Active sites</div>
+                  <div class="kpi-value" id="kpiActive">—</div>
+                  <div class="kpi-sub" id="kpiActiveSub">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6 col-xl-3">
+              <div class="card kpi-card">
+                <div class="card-body">
+                  <div class="kpi-label">QC issue records</div>
+                  <div class="kpi-value" id="kpiQC">—</div>
+                  <div class="kpi-sub" id="kpiQCSub">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6 col-xl-3">
+              <div class="card kpi-card">
+                <div class="card-body">
+                  <div class="kpi-label">Households (active)</div>
+                  <div class="kpi-value" id="kpiHH">—</div>
+                  <div class="kpi-sub" id="kpiHHSub">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6 col-xl-3">
+              <div class="card kpi-card">
+                <div class="card-body">
+                  <div class="kpi-label">Individuals (active)</div>
+                  <div class="kpi-value" id="kpiIND">—</div>
+                  <div class="kpi-sub" id="kpiINDSub">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6 col-xl-3">
+              <div class="card kpi-card">
+                <div class="card-body">
+                  <div class="kpi-label">Structures (active)</div>
+                  <div class="kpi-value" id="kpiStruct">—</div>
+                  <div class="kpi-sub" id="kpiStructSub">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6 col-xl-3">
+              <div class="card kpi-card">
+                <div class="card-body">
+                  <div class="kpi-label">Latrines (active)</div>
+                  <div class="kpi-value" id="kpiLat">—</div>
+                  <div class="kpi-sub" id="kpiLatSub">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <ul class="nav nav-tabs mb-3" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="tab-overview" data-bs-toggle="tab" data-bs-target="#pane-overview" type="button" role="tab">
+                <i class="bi bi-speedometer2"></i> Overview
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-map" data-bs-toggle="tab" data-bs-target="#pane-map" type="button" role="tab">
+                <i class="bi bi-geo-alt"></i> Map
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-quality" data-bs-toggle="tab" data-bs-target="#pane-quality" type="button" role="tab">
+                <i class="bi bi-shield-check"></i> Data Quality
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-records" data-bs-toggle="tab" data-bs-target="#pane-records" type="button" role="tab">
+                <i class="bi bi-table"></i> Records
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-about" data-bs-toggle="tab" data-bs-target="#pane-about" type="button" role="tab">
+                <i class="bi bi-info-circle"></i> About
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content" id="mainTabsContent">
+            <!-- Overview -->
+            <section class="tab-pane fade show active" id="pane-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
+              <div class="row g-3">
+                <div class="col-12 col-xl-6">
+                  <div class="card chart-card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">Assessment progress</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartAssessment"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="chartAssessment" height="140"></canvas>
+                      <div class="small text-body-secondary mt-2" id="assessmentNote">—</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-xl-6">
+                  <div class="card chart-card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">Site status mix</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartSiteStatus"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="chartSiteStatus" height="140"></canvas>
+                      <div class="small text-body-secondary mt-2">Blank values are shown as “Not recorded / Not assessed”.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-xl-6">
+                  <div class="card chart-card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">Phone call outcomes (assessed)</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartPhoneOutcomes"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="chartPhoneOutcomes" height="160"></canvas>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-xl-6">
+                  <div class="card chart-card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">Active sites – structure composition</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartStructures"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="chartStructures" height="160"></canvas>
+                      <div class="small text-body-secondary mt-2">Aggregated counts from active sites only.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="card chart-card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">Top cadasters by active individuals</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartTopCadaster"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="chartTopCadaster" height="120"></canvas>
+                      <div class="small text-body-secondary mt-2">Shows top 10 (filtered).</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+
+            <!-- Map -->
+            <section class="tab-pane fade" id="pane-map" role="tabpanel" aria-labelledby="tab-map" tabindex="0">
+              <div class="row g-3">
+                <div class="col-12 col-xl-8">
+                  <div class="card h-100 map-card">
+                    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                      <div class="fw-semibold">Lebanon interactive map</div>
+                      <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" id="fitLebanonBtn" type="button"><i class="bi bi-arrows-move"></i> Fit</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="clearMapBtn" type="button"><i class="bi bi-x-circle"></i> Clear</button>
+                      </div>
+                    </div>
+                    <div class="card-body p-0">
+                      <div id="lebanonMap" class="map-container"></div>
+                      <div class="map-empty-hint d-none" id="mapEmptyHint">
+                        <div class="p-4 text-center">
+                          <div class="fs-5 fw-semibold mb-1"><i class="bi bi-pin-map"></i> No coordinates found</div>
+                          <div class="text-body-secondary small">
+                            This file doesn’t include usable <b>Latitude</b>/<b>Longitude</b> values (or they’re empty). Add coordinates columns to the main sheet and reload.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-footer small text-body-secondary">
+                      <span id="mapStatusText">Map ready.</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-xl-4">
+                  <div class="card">
+                    <div class="card-header">
+                      <div class="fw-semibold">Map controls</div>
+                      <div class="small text-body-secondary">Markers update automatically with filters.</div>
+                    </div>
+                    <div class="card-body">
+                      <div class="mb-3">
+                        <label class="form-label small mb-1">Color markers by</label>
+                        <select class="form-select" id="mapColorBy">
+                          <option value="Site Status">Site Status</option>
+                          <option value="QC">QC – Any issue</option>
+                          <option value="Phone call status">Phone call status</option>
+                        </select>
+                      </div>
+
+                      <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="toggleCluster" checked>
+                        <label class="form-check-label small" for="toggleCluster">Cluster markers</label>
+                      </div>
+
+                      <div class="card bg-body-tertiary border-0 mb-3">
+                        <div class="card-body p-3">
+                          <div class="d-flex align-items-center justify-content-between">
+                            <div class="fw-semibold small">Coordinates (from spreadsheet)</div>
+                            <span class="badge text-bg-light border" id="coordsBadge">—</span>
+                          </div>
+                          <div class="small text-body-secondary mt-2" id="coordsDetectedText">—</div>
+                        </div>
+                      </div>
+
+                      <div class="card bg-body-tertiary border-0">
+                        <div class="card-body p-3">
+                          <div class="d-flex align-items-center justify-content-between">
+                            <div class="fw-semibold small">Boundaries (optional)</div>
+                            <span class="badge text-bg-light border" id="boundaryBadge">none</span>
+                          </div>
+                          <input class="form-control form-control-sm mt-2" type="file" id="boundaryInput" accept=".geojson,.json" />
+                          <div class="form-text">Upload a GeoJSON for Lebanon admin boundaries (Gov/District/Cadaster).</div>
+                        </div>
+                      </div>
+
+                      <hr class="my-3">
+                      <div class="fw-semibold small mb-2">Legend</div>
+                      <div id="mapLegend" class="map-legend small"></div>
+                    </div>
+                  </div>
+
+                  <div class="card mt-3">
+                    <div class="card-header">
+                      <div class="fw-semibold">How we’ll use your ACS codes later</div>
+                    </div>
+                    <div class="card-body small text-body-secondary">
+                      <ul class="mb-0 ps-3">
+                        <li>Once you provide district/cadaster ACS codes + a matching GeoJSON, we can add <b>choropleth layers</b>.</li>
+                        <li>We can also aggregate indicators (HH/IND/Structures) by admin area and show <b>click-to-filter</b> map interactions.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <!-- Data Quality -->
+            <section class="tab-pane fade" id="pane-quality" role="tabpanel" aria-labelledby="tab-quality" tabindex="0">
+              <div class="row g-3">
+                <div class="col-12 col-xl-7">
+                  <div class="card chart-card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">QC issues by type</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartQC"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="chartQC" height="170"></canvas>
+                      <div class="small text-body-secondary mt-2">Counts represent the number of records that triggered each QC rule (filtered).</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-xl-5">
+                  <div class="card h-100">
+                    <div class="card-header">
+                      <div class="fw-semibold">QC guidance</div>
+                      <div class="small text-body-secondary">Quick remediation hints from the project QC pivot sheet.</div>
+                    </div>
+                    <div class="card-body">
+                      <div class="accordion" id="qcAccordion">
+                        <!-- filled by JS -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">QC issue records (preview)</div>
+                      <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" id="downloadQCBtn" type="button">
+                          <i class="bi bi-download"></i> Export QC-only CSV
+                        </button>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div id="qcMiniTable"></div>
+                      <div class="small text-body-secondary mt-2">Shows a small subset of columns. Use the Records tab for full exploration.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Records -->
+            <section class="tab-pane fade" id="pane-records" role="tabpanel" aria-labelledby="tab-records" tabindex="0">
+              <div class="card">
+                <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                  <div>
+                    <div class="fw-semibold">Records table</div>
+                    <div class="small text-body-secondary">Search, sort, and export. PII columns are hidden by default.</div>
+                  </div>
+
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" role="switch" id="togglePII">
+                      <label class="form-check-label small" for="togglePII">Show PII columns</label>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" id="downloadTableBtn" type="button">
+                      <i class="bi bi-download"></i> Export table CSV
+                    </button>
+                  </div>
+                </div>
+
+                <div class="card-body">
+                  <div id="recordsTable"></div>
+                </div>
+              </div>
+            </section>
+
+            <!-- About -->
+            <section class="tab-pane fade" id="pane-about" role="tabpanel" aria-labelledby="tab-about" tabindex="0">
+              <div class="row g-3">
+                <div class="col-12 col-xl-7">
+                  <div class="card">
+                    <div class="card-header">
+                      <div class="fw-semibold">What’s included</div>
+                    </div>
+                    <div class="card-body">
+                      <ul class="mb-0">
+                        <li><b>Progress</b>: assessed vs not assessed, plus phone call outcomes.</li>
+                        <li><b>Active sites</b>: totals for structures, households, individuals, latrines and structure types.</li>
+                        <li><b>Data quality</b>: QC issue rates and a QC-by-type chart.</li>
+                        <li><b>Records</b>: interactive table with export; PII hidden by default.</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div class="card mt-3">
+                    <div class="card-header">
+                      <div class="fw-semibold">How to publish</div>
+                    </div>
+                    <div class="card-body">
+                      <ol class="mb-0">
+                        <li>Deploy to <b>Vercel</b> (recommended) or Netlify as a static site.</li>
+                        <li><b>Optional (recommended):</b> Configure the Vercel backend endpoints (<code>/api/xlsx</code>) to securely pull the latest SharePoint XLSX.</li>
+                        <li>Open the dashboard → <b>Data</b> → enable <b>Live mode</b>, or use <b>Load File</b> for manual updates.</li>
+                      </ol>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-xl-5">
+                  <div class="card">
+                    <div class="card-header">
+                      <div class="fw-semibold">Privacy by default</div>
+                    </div>
+                    <div class="card-body">
+                      <p class="small text-body-secondary mb-2">
+                        This dashboard hides phone numbers and personal names in the Records tab unless you explicitly enable them.
+                      </p>
+                      <div class="alert alert-warning small mb-0">
+                        If you intend to publish this publicly, keep PII columns disabled and avoid sharing raw exports.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="card mt-3">
+                    <div class="card-header">
+                      <div class="fw-semibold">Troubleshooting</div>
+                    </div>
+                    <div class="card-body small">
+                      <ul class="mb-0 ps-3">
+                        <li>If “Load URL” fails: your link might require authentication or does not return the xlsx directly.</li>
+                        <li>Some SharePoint preview pages block JavaScript; host the dashboard on a normal web host (Vercel/Netlify) or embed it with an iframe that allows scripts.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Footer -->
+          <footer class="mt-4 pt-3 border-top small text-body-secondary">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div>
+                Built for the IAMP informal settlements mapping data collection workflow.
+              </div>
+              <div>
+                <span class="me-2">v2026.02</span>
+                <a class="link-secondary" href="#" id="scrollTopLink">Back to top</a>
+              </div>
+            </div>
+          </footer>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="loading-overlay d-none">
+    <div class="loading-card">
+      <div class="spinner-border" role="status" aria-label="Loading"></div>
+      <div class="mt-3 fw-semibold">Loading data…</div>
+      <div class="small text-body-secondary mt-1" id="loadingDetail">Parsing spreadsheet</div>
+    </div>
+  </div>
+
+  <!-- Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@6.2.1/dist/js/tabulator.min.js"></script>
+  <!-- Leaflet (map) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+  <!-- App -->
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
