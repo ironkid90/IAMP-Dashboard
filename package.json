@@ -1,7 +1,8 @@
 {
   "name": "iamp-sites-mapping-dashboard",
   "private": true,
-  "type": "module",
+  "version": "0.0.0",
+  "type": "commonjs",
   "engines": {
     "node": ">=18"
   }

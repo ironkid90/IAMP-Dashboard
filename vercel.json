@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/hand_sharepoint_dashboard/",
+      "permanent": false
+    }
+  ]
+}

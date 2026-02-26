@@ -1,95 +1,80 @@
-# IAMP Sites Mapping Dashboard (Redesigned + Map-ready)
+# IAMP Sites Mapping Dashboard (Static Build)
 
-This is a **static** (HTML/CSS/JS) dashboard for the **IAMP Informal Settlements Sites Mapping** spreadsheet.
+This package is a **Phase 1 + Phase 2 structure** build:
 
-It runs entirely in the browser and provides:
-- Progress KPIs (assessed vs not assessed)
-- Phone-call outcomes + site-status mix
-- Active-site totals (structures / households / individuals / latrines + composition)
-- QC monitoring (issue rate + issues by type + quick remediation tips)
-- Records table (search/sort/export) with **PII hidden by default**
-- **Interactive Lebanon map** (Leaflet) — supports point markers now, choropleths later
+- **Phase 1 (UI polish)**: consistent design tokens, cleaner background/card hierarchy, smaller charts, click-to-filter interactions, improved table UX.
+- **Phase 2 (Geo structure)**: points + boundaries + choropleth + boundary click-to-filter, using **PCODEs** as the join key.
 
----
+## What’s inside
 
-## Quick start
+### `/hand_sharepoint_dashboard/`
+Static dashboard (HTML/CSS/JS):
 
-1. Open: `hand_sharepoint_dashboard/index.html`
-2. Click **Data → Load File** and select your latest exported `.xlsx`.
+- Auto-loads `assets/data/sites.json` (already merged, no browser Excel parsing).
+- Filters by Governorate/District/Cadaster (PCODE), Site Status, Phone call status, QC.
+- KPIs + charts + table + map (Leaflet).
+- CSV export of the filtered view.
 
-A small **redacted sample** is included and auto-loaded on first open:
-- `hand_sharepoint_dashboard/assets/data/IAMP_sites_mapping_SAMPLE_REDACTED.xlsx`
-Disable auto-load via: `?noSample=1`
+### `/hand_sharepoint_dashboard/assets/data/`
+Generated data artifacts:
 
----
+- `sites.json` – canonical points dataset (redacted; no phone numbers)
+- `boundaries_admin1.geojson` – trimmed admin1
+- `boundaries_admin2.geojson` – trimmed admin2
+- `boundaries_admin3_subset.geojson` – trimmed admin3 **subset** (fast load)
+- `boundaries_admin3_full.geojson` – trimmed admin3 **full** (optional; heavier)
 
-## Map: how it works
+### `/api/data.js`
+A Vercel Serverless Function stub.
 
-### What the map needs
-The map reads coordinates **directly from your main spreadsheet**.
+Current behavior: serves the bundled `sites.json` with caching + ETag.
 
-The dashboard automatically detects the best Latitude/Longitude columns (supports common names like `Latitude` / `Longitude`, `Lat` / `Lng`, etc.).
-If no usable coordinates are found, the Map tab will show a clear “No coordinates found” hint.
+Next step: replace it with logic that fetches the latest XLSX + ArcGIS JSON, merges server-side, and returns clean JSON.
 
-### Optional boundaries
-You can upload a **GeoJSON** boundary file to show admin boundaries (Governorate/District/Cadaster):
-- Map tab → **Boundaries (optional)**
+### `/tools/preprocess_iamp.py`
+Offline preprocessing script to regenerate `sites.json` + trimmed boundaries.
 
-This is the placeholder step needed before we add **choropleths + click-to-filter** using ACS codes.
+## Deploy (Vercel)
 
----
+1. Deploy the folder as a static site.
+2. The dashboard entrypoint is:
+   - `/` (redirects to `/hand_sharepoint_dashboard/`)
 
-## Deploy
+## Regenerate the JSON (local)
 
-### Netlify
-- Drag-and-drop the folder, or connect a repo.
-- Publish directory: the project root (so `/hand_sharepoint_dashboard` works).
+Example:
 
-### Vercel
-- Deploy as a static project.
-- Ensure `hand_sharepoint_dashboard/` is included in the output.
-
-### Vercel (recommended) — Live SharePoint mode (no manual uploads)
-This repo includes optional **Vercel Functions** that can securely fetch the latest XLSX from SharePoint/OneDrive via **Microsoft Graph**.
-
-Once configured, the dashboard can run in **Live mode** and load the latest spreadsheet from:
-- `GET /api/xlsx` (binary XLSX)
-- `GET /api/status` (metadata)
-
-> Why: avoids CORS/auth issues because the browser only talks to your own Vercel domain.
-
-#### Minimal Environment Variables
-
-**Option 1 (simplest):** if you can get a **direct download URL** to the XLSX (e.g., an “Anyone with the link” file that returns the `.xlsx` bytes), set just:
-- `LIVE_XLSX_URL`
-
-**Option 2 (private SharePoint):** use Microsoft Graph (app-only). To reduce env vars, set **one** variable:
-- `IAMP_GRAPH_CONFIG` (JSON) **or** `IAMP_GRAPH_CONFIG_B64` (base64 of JSON)
-
-Example JSON:
-```json
-{
-  "MS_TENANT_ID": "...",
-  "MS_CLIENT_ID": "...",
-  "MS_CLIENT_SECRET": "...",
-  "SP_SHARE_LINK": "https://..."
-}
+```bash
+python tools/preprocess_iamp.py \
+  --assessment_csv "IAMP_sites_mapping_YYYYMMDD.csv" \
+  --master_xlsx "IAMP-133_ListofInformalSettlements_29_August_2025.xlsx" \
+  --boundaries_dir "./boundaries" \
+  --out_dir "./hand_sharepoint_dashboard/assets/data" \
+  --subset_admin3 \
+  --write_full_admin3
 ```
 
-(You can also set the individual `MS_*` and `SP_*` vars as a classic setup — see `.env.example`.)
+Where `./boundaries` contains:
 
-After deploy, open the dashboard → **Data panel → Live mode**.
+- `lbn_admin1.geojson`
+- `lbn_admin2.geojson`
+- `lbn_admin3.geojson`
 
----
+## Data model (sites.json)
 
-## Notes about SharePoint embedding
-Some SharePoint/OneDrive preview pages block JavaScript in iframes. For reliable results:
-- Host this dashboard on Vercel/Netlify
-- Embed using an iframe that allows scripts
+Each site record includes:
 
----
+- `pcode`, `name`, `local_name`
+- `lat`, `lon`
+- `adm1_pcode`, `adm2_pcode`, `adm3_pcode`
+- operational fields: `site_status`, `phone_status`, `assessed_date`
+- metrics: totals + structure breakdown
+- QC flags: `qc_any_issue`, `qc_issue_count`, and issue-specific booleans
 
-## Privacy
-PII columns (names/phone numbers) are **hidden by default** in the Records tab.
+PII (phone numbers, personal names) is intentionally not exported.
 
-**Important:** Do NOT ship the real spreadsheet inside `assets/data/` if this will be publicly accessible, because anyone could download it from the browser.
+## Notes / next improvements
+
+- Replace lightweight QC flags with your full QC pivot rules.
+- Convert boundaries to TopoJSON + simplify for faster map loading.
+- Switch frontend fetch to `/api/data` for “always latest” without redeploying static assets.
