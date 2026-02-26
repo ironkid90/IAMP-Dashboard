@@ -1,19 +1,18 @@
-# IAMP Sites Mapping Dashboard (Static Build)
+# HAND Mapping Platform
 
-This package is a **Phase 1 + Phase 2 structure** build:
+Static build of a public-facing mapping dashboard for Lebanon informal settlements:
 
-- **Phase 1 (UI polish)**: consistent design tokens, cleaner background/card hierarchy, smaller charts, click-to-filter interactions, improved table UX.
-- **Phase 2 (Geo structure)**: points + boundaries + choropleth + boundary click-to-filter, using **PCODEs** as the join key.
+- Filters by Governorate/District/Cadaster (PCODE), Site Status, Phone call status, QC.
+- KPIs + charts + table + interactive map (Leaflet).
+- CSV export of the current filtered view.
 
 ## What’s inside
 
 ### `/hand_sharepoint_dashboard/`
 Static dashboard (HTML/CSS/JS):
 
-- Auto-loads `assets/data/sites.json` (already merged, no browser Excel parsing).
-- Filters by Governorate/District/Cadaster (PCODE), Site Status, Phone call status, QC.
-- KPIs + charts + table + map (Leaflet).
-- CSV export of the filtered view.
+- Loads data from `/api/data` when available (Vercel), with a fallback to the bundled JSON.
+- Uses boundary PCODEs for robust filtering + choropleths + click-to-filter.
 
 ### `/hand_sharepoint_dashboard/assets/data/`
 Generated data artifacts:
@@ -75,6 +74,5 @@ PII (phone numbers, personal names) is intentionally not exported.
 
 ## Notes / next improvements
 
-- Replace lightweight QC flags with your full QC pivot rules.
 - Convert boundaries to TopoJSON + simplify for faster map loading.
-- Switch frontend fetch to `/api/data` for “always latest” without redeploying static assets.
+- Replace bundled JSON serving with a live server-side merge pipeline (latest XLSX + ArcGIS export).

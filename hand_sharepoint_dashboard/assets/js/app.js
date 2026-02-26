@@ -1,4 +1,4 @@
-/* IAMP Sites Mapping Dashboard
+/* HAND Mapping Platform
    Static build: loads preprocessed JSON for speed + a map-ready structure.
 
    Key ideas:
@@ -14,6 +14,15 @@
   const $ = (id) => document.getElementById(id);
   const fmtInt = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
   const fmtPct = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
+
+  // Brand palette (HAND)
+  const BRAND = {
+    primary: "#0c61ad",
+    navy: "#083a6b",
+    accent: "#fb9445",
+    slate: "#64748b",
+    noData: "#e2e8f0",
+  };
 
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
@@ -180,24 +189,10 @@
     toastTimer = window.setTimeout(() => { node.style.display = "none"; }, 2200);
   }
 
-  // ---------- theme ----------
-  function initTheme(){
-    // Light mode only (public / production default)
-    const root = document.documentElement;
-    root.setAttribute("data-bs-theme", "light");
-
-    // If older builds stored a theme preference, ignore it.
-    try { localStorage.removeItem("iamp_theme"); } catch (e) {}
-
-    // Backward compatibility: if a theme toggle exists, hide it.
-    const btn = document.getElementById("themeToggle");
-    if (btn){ btn.style.display = "none"; }
-  }
-
-
   // ---------- data load ----------
   async function loadJSON(url){
-    const res = await fetch(url, { cache: "no-store" });
+    // Allow browser revalidation/caching (ETag) while still pulling fresh data when available.
+    const res = await fetch(url, { cache: "no-cache" });
     if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
     return await res.json();
   }
@@ -211,11 +206,39 @@
       return;
     }
     const c = state.meta.counts || {};
-    badge.textContent = `${fmtInt.format(c.records || state.raw.length)} records`;
-    updated.textContent = state.meta.generated_at_utc ? `Generated ${state.meta.generated_at_utc}` : "—";
-    $("dataMetaText").textContent = state.meta.generated_at_utc
-      ? `Generated at ${state.meta.generated_at_utc} (UTC).`
-      : "—";
+
+    const total = c.records || state.raw.length;
+    const withCoords = c.with_coords ?? null;
+    const qcAny = c.qc_any_issue ?? null;
+
+    badge.textContent = `${fmtInt.format(total)} sites`;
+
+    // Friendly last updated label
+    const gen = state.meta.generated_at_utc;
+    let updatedLabel = "—";
+    if (gen){
+      const d = new Date(gen);
+      updatedLabel = isNaN(d.getTime()) ? `Updated ${gen}` : `Updated ${d.toLocaleString()}`;
+    }
+    updated.textContent = updatedLabel;
+
+    // Data panel meta text
+    const parts = [];
+    if (gen) parts.push(`Generated: ${gen} (UTC)`);
+    if (withCoords !== null) parts.push(`With coordinates: ${fmtInt.format(withCoords)} (${fmtPct.format((withCoords/Math.max(1,total))*100)}%)`);
+    if (qcAny !== null) parts.push(`QC flagged: ${fmtInt.format(qcAny)} (${fmtPct.format((qcAny/Math.max(1,total))*100)}%)`);
+
+    const sf = state.meta.source_files || {};
+    const sources = [];
+    if (sf.assessment_csv) sources.push(`Assessment: ${sf.assessment_csv}`);
+    if (sf.master_xlsx) sources.push(`Site list: ${sf.master_xlsx}`);
+    if (sf.boundaries_zip) sources.push(`Boundaries: ${sf.boundaries_zip}`);
+
+    $("dataMetaText").textContent = [...parts, ...(sources.length ? ["Sources: " + sources.join(" • ")] : [])].join("\n");
+    const hint = $("dataSourceHint");
+    if (hint){
+      hint.textContent = (state.meta._loaded_via === "bundle") ? "Bundled JSON" : "API: /api/data";
+    }
   }
 
   function buildLookups(){
@@ -247,8 +270,17 @@
     setHealth({ lastLoad: nowLocalString(), lastSuccess: null, errorCount: 0, message: "Loading…" });
 
     try{
-      const sitesData = await loadJSON("assets/data/sites.json");
+      // Prefer the serverless endpoint (Vercel). Fall back to the bundled JSON for offline/static hosting.
+      let sitesData = null;
+      let loadedVia = "api";
+      try{
+        sitesData = await loadJSON("/api/data");
+      }catch{
+        loadedVia = "bundle";
+        sitesData = await loadJSON("assets/data/sites.json");
+      }
       state.meta = sitesData.meta || null;
+      if (state.meta) state.meta._loaded_via = loadedVia;
       state.raw = Array.isArray(sitesData.sites) ? sitesData.sites : [];
 
       // boundaries
@@ -570,8 +602,8 @@
       data: {
         labels: ["Progress"],
         datasets: [
-          { label: "Assessed", data: [0] },
-          { label: "Not assessed", data: [0] },
+          { label: "Assessed", data: [0], backgroundColor: BRAND.primary },
+          { label: "Not assessed", data: [0], backgroundColor: BRAND.noData },
         ]
       },
       options: {
@@ -593,7 +625,7 @@
     const ctxS = $("chartSiteStatus").getContext("2d");
     state.charts.siteStatus = new Chart(ctxS, {
       type: "bar",
-      data: { labels: [], datasets: [{ label: "Sites", data: [] }] },
+      data: { labels: [], datasets: [{ label: "Sites", data: [], backgroundColor: BRAND.primary }] },
       options: {
         ...chartDefaults(),
         indexAxis: "y",
@@ -611,7 +643,7 @@
     const ctxP = $("chartPhoneOutcomes").getContext("2d");
     state.charts.phone = new Chart(ctxP, {
       type: "bar",
-      data: { labels: [], datasets: [{ label: "Records", data: [] }] },
+      data: { labels: [], datasets: [{ label: "Records", data: [], backgroundColor: BRAND.accent }] },
       options: {
         ...chartDefaults(),
         indexAxis: "y",
@@ -632,10 +664,10 @@
       data: {
         labels: ["Active structures"],
         datasets: [
-          { label: "Tents", data: [0] },
-          { label: "Self-built (non-concrete roof)", data: [0] },
-          { label: "Prefab", data: [0] },
-          { label: "Self-built (concrete roof)", data: [0] },
+          { label: "Tents", data: [0], backgroundColor: BRAND.accent },
+          { label: "Self-built (non-concrete roof)", data: [0], backgroundColor: "#93c5fd" },
+          { label: "Prefab", data: [0], backgroundColor: "#60a5fa" },
+          { label: "Self-built (concrete roof)", data: [0], backgroundColor: BRAND.primary },
         ]
       },
       options: {
@@ -656,7 +688,7 @@
     const ctxT = $("chartTopCadaster").getContext("2d");
     state.charts.topCad = new Chart(ctxT, {
       type: "bar",
-      data: { labels: [], datasets: [{ label: "Individuals (active)", data: [] }] },
+      data: { labels: [], datasets: [{ label: "Individuals (active)", data: [], backgroundColor: BRAND.primary }] },
       options: {
         ...chartDefaults(),
         indexAxis: "y",
@@ -675,7 +707,7 @@
     const ctxQC = $("chartQC").getContext("2d");
     state.charts.qc = new Chart(ctxQC, {
       type: "bar",
-      data: { labels: [], datasets: [{ label: "Records", data: [] }] },
+      data: { labels: [], datasets: [{ label: "Records", data: [], backgroundColor: "#7c3aed" }] },
       options: {
         ...chartDefaults(),
         indexAxis: "y",
@@ -891,13 +923,13 @@
     });
 
     $("downloadTableBtn").addEventListener("click", () => {
-      state.table.download("csv", "iamp_records_filtered.csv");
+      state.table.download("csv", "hand_records_filtered.csv");
     });
 
     $("downloadQCBtn").addEventListener("click", () => {
       const qcRows = buildTableRows(state.filtered.filter(s => s.qc?.qc_any_issue));
       const csv = toCSV(qcRows, tableCSVColumns());
-      downloadText("iamp_qc_records.csv", csv);
+      downloadText("hand_qc_records.csv", csv);
     });
   }
 
@@ -963,7 +995,7 @@
   function exportFilteredCSV(){
     const rows = buildTableRows(state.filtered);
     const csv = toCSV(rows, tableCSVColumns());
-    downloadText("iamp_filtered_export.csv", csv);
+    downloadText("hand_filtered_export.csv", csv);
   }
 
   // ---------- map ----------
@@ -971,25 +1003,19 @@
     const mapEl = $("lebanonMap");
     if (!mapEl) return;
 
-    const map = L.map(mapEl, { preferCanvas: true, zoomSnap: 0.5 });
+    const map = L.map(mapEl, { preferCanvas: true, zoomSnap: 0.5, zoomControl: false });
     state.map.map = map;
 
-    // Base tiles
+    // Keep top corners clean for overlay cards.
+    L.control.zoom({ position: "bottomleft" }).addTo(map);
+    L.control.scale({ position: "bottomright", imperial: false }).addTo(map);
+
+    // Clean light basemap for public-facing dashboards.
     state.map.base = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
       subdomains: "abcd",
       maxZoom: 20,
       attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
     }).addTo(map);
-
-    // Scale bar (metric)
-    L.control.scale({ imperial: false }).addTo(map);
-
-    // Keep Leaflet happy on resize (debounced)
-    let resizeTimer = null;
-    window.addEventListener("resize", () => {
-      if (resizeTimer) window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(() => { try { map.invalidateSize(); } catch(e) {} }, 120);
-    });
 
     // Marker layers
     state.map.cluster = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 40 });
@@ -1076,10 +1102,10 @@
 
     for (const s of withCoords){
       const cat = markerCategory(colorBy, s);
-      const color = palette.get(cat) || "#64748b";
+      const color = palette.get(cat) || BRAND.slate;
 
       const m = L.circleMarker([s.lat, s.lon], {
-        radius: 5,
+        radius: 4,
         weight: 1,
         color: "rgba(0,0,0,0.25)",
         fillColor: color,
@@ -1115,6 +1141,9 @@
   }
 
   function markerCategory(colorBy, s){
+    if (colorBy === "single"){
+      return "Sites";
+    }
     if (colorBy === "site_status"){
       return s.site_status || "Not recorded";
     }
@@ -1128,6 +1157,9 @@
   }
 
   function markerPalette(colorBy, sites){
+    if (colorBy === "single"){
+      return new Map([["Sites", BRAND.accent]]);
+    }
     // Deterministic category ordering
     const cats = uniqueSorted(sites.map(s => markerCategory(colorBy, s)));
     // Pick simple (and readable) colors. Not fancy, just functional.
@@ -1192,8 +1224,10 @@
     const values = [];
     for (const f of fc.features || []){
       const code = String(f.properties?.[codeProp] ?? "");
-      const v = agg.get(code)?.value ?? 0;
-      values.push(v);
+      const g = agg.get(code);
+      if (!g) continue;
+      const v = g.value;
+      if (typeof v === "number" && Number.isFinite(v)) values.push(v);
     }
 
     const scale = buildScale(values, metric);
@@ -1201,27 +1235,41 @@
     const layer = L.geoJSON(fc, {
       style: (feature) => {
         const code = String(feature.properties?.[codeProp] ?? "");
-        const v = agg.get(code)?.value ?? 0;
+        const g = agg.get(code);
+        if (!g){
+          return {
+            weight: 1,
+            color: "rgba(255,255,255,0.85)",
+            fillColor: scale.noDataColor,
+            fillOpacity: 0.75,
+          };
+        }
+        const v = g.value;
         const fill = scale.color(v);
         return {
           weight: 1,
-          color: "rgba(0,0,0,0.25)",
+          color: "rgba(255,255,255,0.85)",
           fillColor: fill,
-          fillOpacity: 0.60,
+          fillOpacity: 0.85,
         };
       },
       onEachFeature: (feature, lyr) => {
         const code = String(feature.properties?.[codeProp] ?? "");
         const name = String(feature.properties?.[nameProp] ?? code);
-        const v = agg.get(code)?.value ?? 0;
-        const display = scale.format(v);
+        const g = agg.get(code);
 
-        lyr.bindTooltip(`${escapeHtml(name)}<br/><b>${escapeHtml(scale.label)}:</b> ${escapeHtml(display)}`, { sticky: true });
+        const displayValue = g ? scale.format(g.value) : scale.noDataLabel;
+        const displaySites = g ? fmtInt.format(g.count) : "0";
+
+        lyr.bindTooltip(
+          `${escapeHtml(name)}<br/><b>${escapeHtml(scale.label)}:</b> ${escapeHtml(displayValue)}<br/><b>Sites:</b> ${escapeHtml(displaySites)}`,
+          { sticky: true }
+        );
 
         lyr.on("click", () => {
           // Highlight clicked polygon (visual selection)
           clearMapSelection();
-          state.map.selectionLayer = L.geoJSON(feature, { style: { weight: 2.5, color: "#0ea5e9", fillOpacity: 0.10 } }).addTo(map);
+          state.map.selectionLayer = L.geoJSON(feature, { style: { weight: 3, color: BRAND.accent, fillOpacity: 0.08 } }).addTo(map);
 
           // Apply filter
           if (level === "adm2"){
@@ -1277,81 +1325,150 @@
   }
 
   function buildScale(values, metric){
-    const nonNa = values.filter(v => typeof v === "number" && Number.isFinite(v));
-    const min = nonNa.length ? Math.min(...nonNa) : 0;
-    const max = nonNa.length ? Math.max(...nonNa) : 0;
+  const nonNa = values.filter(v => typeof v === "number" && Number.isFinite(v));
 
-    // 5-step buckets
-    const steps = 5;
-    const breaks = [];
-    for (let i=1; i<steps; i++){
-      const t = i/steps;
-      breaks.push(min + (max-min)*t);
-    }
+  const labelByMetric = {
+    sites_count: "Sites",
+    individuals_active: "Individuals (active)",
+    households_active: "Households (active)",
+    qc_rate: "QC any-issue %",
+    assessed_rate: "Assessed %",
+  };
 
-    const labelByMetric = {
-      sites_count: "Sites",
-      individuals_active: "Individuals (active)",
-      households_active: "Households (active)",
-      qc_rate: "QC any-issue %",
-      assessed_rate: "Assessed %",
-    };
+  const isPct = (metric === "qc_rate" || metric === "assessed_rate");
 
-    const isPct = (metric === "qc_rate" || metric === "assessed_rate");
+  const format = (v) => {
+    if (!Number.isFinite(v)) return "—";
+    if (isPct) return `${fmtPct.format(v)}%`;
+    return fmtInt.format(v);
+  };
 
-    const color = (v) => {
-      if (!Number.isFinite(v) || max === min) return "rgba(148,163,184,0.25)";
-      const t = (v - min) / (max - min);
-      // Blue scale
-      const hue = 215;
-      const sat = 72;
-      const light = 92 - (clamp(t,0,1) * 45); // 92 -> 47
-      return `hsl(${hue} ${sat}% ${light}%)`;
-    };
+  // Classic cartographic "Blues" (close to the IOM/DTM look)
+  const colors = ["#deebf7", "#9ecae1", "#6baed6", "#3182bd", "#08519c"];
 
-    const format = (v) => {
-      if (!Number.isFinite(v)) return "—";
-      if (isPct) return `${fmtPct.format(v)}%`;
-      return fmtInt.format(v);
-    };
-
+  if (!nonNa.length){
     return {
-      min, max, breaks, color, format,
+      min: 0,
+      max: 0,
+      breaks: [],
+      bins: [],
+      color: () => BRAND.noData,
+      format,
       label: labelByMetric[metric] || metric,
       isPct,
+      noDataColor: BRAND.noData,
+      noDataLabel: "No sites",
     };
   }
 
-  function renderChoroplethLegend(scale){
-    const node = $("mapLegend");
-    if (!node) return;
+  const sorted = [...nonNa].sort((a,b)=>a-b);
+  const min = sorted[0];
+  const max = sorted[sorted.length-1];
 
-    // We append choropleth legend above existing marker legend rows.
-    const rows = [];
-
-    // Build 5 sample swatches
-    const steps = 5;
-    for (let i=0; i<steps; i++){
-      const t = (steps === 1) ? 0 : i/(steps-1);
-      const v = scale.min + (scale.max - scale.min) * t;
-      rows.push(`
-        <div class="legend-row">
-          <span class="legend-swatch" style="background:${scale.color(v)}"></span>
-          <span>${escapeHtml(scale.format(v))}</span>
-        </div>
-      `);
-    }
-
-    const title = `<div class="fw-semibold mb-1">Choropleth: ${escapeHtml(scale.label)}</div>`;
-    const divider = `<hr class="my-2" style="border-color: var(--app-border)">`;
-
-    // Keep existing marker legend (already in node.innerHTML)
-    const markerLegend = state.map.markerLegendHTML ? `<div class="mt-2">${divider}<div class="fw-semibold mb-1">Markers</div>${state.map.markerLegendHTML}</div>` : "";
-
-    node.innerHTML = title + rows.join("") + markerLegend;
+  // Edge case: everything the same
+  if (max === min){
+    return {
+      min,
+      max,
+      breaks: [],
+      bins: [{ from: min, to: max, color: colors[2] }],
+      color: () => colors[2],
+      format,
+      label: labelByMetric[metric] || metric,
+      isPct,
+      noDataColor: BRAND.noData,
+      noDataLabel: "No sites",
+    };
   }
 
-  function escapeHtml(s){
+  const quantile = (p) => {
+    const idx = Math.floor((sorted.length - 1) * p);
+    return sorted[idx];
+  };
+
+  // Quantile breaks (fallback to linear if too many ties)
+  let breaks = [quantile(0.2), quantile(0.4), quantile(0.6), quantile(0.8)];
+  const uniqueBreaks = Array.from(new Set(breaks));
+  if (uniqueBreaks.length < breaks.length){
+    breaks = [];
+    for (let i=1; i<5; i++){
+      breaks.push(min + (max - min) * (i/5));
+    }
+  }
+
+  const idxFor = (v) => {
+    for (let i=0; i<breaks.length; i++){
+      if (v <= breaks[i]) return i;
+    }
+    return colors.length - 1;
+  };
+
+  const bins = [];
+  for (let i=0; i<colors.length; i++){
+    const from = (i === 0) ? min : breaks[i-1];
+    const to = (i < breaks.length) ? breaks[i] : max;
+    bins.push({ from, to, color: colors[i] });
+  }
+
+  const color = (v) => {
+    if (!Number.isFinite(v)) return BRAND.noData;
+    return colors[idxFor(v)];
+  };
+
+  return {
+    min,
+    max,
+    breaks,
+    bins,
+    color,
+    format,
+    label: labelByMetric[metric] || metric,
+    isPct,
+    noDataColor: BRAND.noData,
+    noDataLabel: "No sites",
+  };
+}
+
+function renderChoroplethLegend(scale){
+  const node = $("mapLegend");
+  if (!node) return;
+
+  const rows = [];
+
+  // No-data row
+  rows.push(`
+    <div class="legend-row">
+      <span class="legend-swatch" style="background:${scale.noDataColor}"></span>
+      <span>${escapeHtml(scale.noDataLabel)}</span>
+    </div>
+  `);
+
+  // Data bins
+  for (const b of scale.bins){
+    const label = (b.from === b.to)
+      ? scale.format(b.from)
+      : `${scale.format(b.from)} – ${scale.format(b.to)}`;
+
+    rows.push(`
+      <div class="legend-row">
+        <span class="legend-swatch" style="background:${b.color}"></span>
+        <span>${escapeHtml(label)}</span>
+      </div>
+    `);
+  }
+
+  const title = `<div class="fw-semibold mb-1">Choropleth: ${escapeHtml(scale.label)}</div>`;
+  const divider = `<hr class="my-2" style="border-color: var(--app-border)">`;
+
+  const markerLegend = state.map.markerLegendHTML
+    ? `<div class="mt-2">${divider}<div class="fw-semibold mb-1">Markers</div>${state.map.markerLegendHTML}</div>`
+    : "";
+
+  node.innerHTML = title + rows.join("") + markerLegend;
+}
+
+function escapeHtml(s){
+
     return String(s ?? "").replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
@@ -1366,7 +1483,6 @@
     if (uiInitialized) return;
     uiInitialized = true;
 
-    initTheme();
     initCharts();
     initQCAccordion();
     initTables();

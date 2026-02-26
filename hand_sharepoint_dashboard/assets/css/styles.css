@@ -1,8 +1,17 @@
-/* HAND Mapping Platform – lightweight design system (light mode only)
-   Inspired by clean humanitarian reporting layouts (e.g., map-first, clear legend, compact KPIs).
+/* HAND Mapping Platform – lightweight design system
+   Goal: consistent hierarchy, softer background, smaller charts, cleaner cards.
 */
 
 :root{
+  --brand-primary: #0c61ad;
+  --brand-navy:    #083a6b;
+  --brand-accent:  #fb9445;
+
+  /* Bootstrap theme hooks */
+  --bs-primary: var(--brand-primary);
+  --bs-primary-rgb: 12, 97, 173;
+  --bs-link-color: var(--brand-primary);
+
   --app-bg-0: #f6f8fb;
   --app-bg-1: #ffffff;
   --app-card: #ffffff;
@@ -36,33 +45,59 @@ html, body{
 }
 
 body{
-  color: var(--app-text-strong);
-  background:
-    radial-gradient(1200px 600px at 20% -10%, rgba(14,165,233,0.10), transparent 60%),
-    radial-gradient(900px 500px at 90% 10%, rgba(124,58,237,0.07), transparent 55%),
-    var(--app-bg-0);
+  background: linear-gradient(180deg, #f7f9fc 0%, #f3f6fb 100%);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
-/* Navbar */
 .app-navbar{
-  backdrop-filter: blur(10px);
-  background: color-mix(in srgb, var(--app-bg-1) 92%, rgba(14,165,233,0.06)) !important;
+  background: linear-gradient(90deg, var(--brand-navy), var(--brand-primary));
+  border-bottom: 1px solid rgba(255,255,255,0.14);
+}
+
+.app-navbar .navbar-brand,
+.app-navbar .navbar-brand:hover{
+  color: #fff;
+}
+
+.app-navbar .brand-title{ color: #fff; }
+.app-navbar .brand-subtitle{ color: rgba(255,255,255,0.82); }
+
+.app-navbar .badge{
+  background: rgba(255,255,255,0.92) !important;
+  color: #0f172a !important;
+  border-color: rgba(255,255,255,0.45) !important;
+}
+
+.app-navbar .btn-light{
+  background: rgba(255,255,255,0.92);
+  border-color: rgba(255,255,255,0.65);
+}
+.app-navbar .btn-light:hover{
+  background: rgba(255,255,255,1);
 }
 
 .brand-logo{
-  width: 44px;
-  height: auto;
-  object-fit: contain;
-  border-radius: 8px;
+  height: 34px;
+  width: auto;
 }
 
-/* Layout */
+.brand-title{
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--app-text-strong);
+}
+
+.brand-subtitle{
+  font-size: 12px;
+  color: var(--app-text-muted);
+}
+
 .app-shell{
   padding-bottom: 24px;
 }
 
 .sidebar{
-  background: color-mix(in srgb, var(--app-bg-1) 94%, rgba(14,165,233,0.06));
+  background: color-mix(in srgb, var(--app-bg-1) 92%, rgba(11,95,170,0.06));
 }
 
 @media (min-width: 992px){
@@ -74,12 +109,20 @@ body{
   }
 }
 
-/* Cards */
 .card{
   border-radius: var(--app-radius);
   border: 1px solid var(--app-border);
   box-shadow: var(--app-shadow-sm);
   background: var(--app-card);
+}
+
+.map-hero-card{
+  box-shadow: var(--app-shadow);
+  overflow: hidden;
+}
+
+.map-hero-card .card-header{
+  background: linear-gradient(90deg, rgba(8,58,107,0.10), rgba(12,97,173,0.10));
 }
 
 .card-header{
@@ -92,66 +135,54 @@ body{
   padding: 14px;
 }
 
-/* Snapshot (KPIs) */
-.snapshot-grid{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.kpi-card .card-body{
+  padding: 14px;
 }
 
-.snapshot-item{
-  border: 1px solid var(--app-border);
-  border-radius: var(--app-radius-sm);
-  padding: 10px 10px;
-  background: color-mix(in srgb, var(--app-bg-1) 92%, rgba(14,165,233,0.05));
-}
-
-.snapshot-label{
-  font-size: 11px;
+.kpi-label{
+  font-size: 12px;
   letter-spacing: .02em;
   color: var(--app-text-muted);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
-.snapshot-value{
-  font-size: 20px;
-  font-weight: 750;
+.kpi-value{
+  font-size: 28px;
+  font-weight: 700;
   line-height: 1.1;
   color: var(--app-text-strong);
 }
 
-.snapshot-sub{
-  margin-top: 4px;
-  font-size: 11px;
+.kpi-sub{
+  margin-top: 6px;
+  font-size: 12px;
   color: var(--app-text-muted);
 }
 
-/* Charts */
 .chart-card .card-body{
   padding-top: 12px;
 }
 
 .chart-wrap{
-  height: 150px;
+  height: 140px;
 }
 .chart-wrap-tall{
-  height: 190px;
+  height: 180px;
 }
 .chart-wrap-wide{
-  height: 220px;
+  height: 210px;
 }
 .chart-wrap canvas{
   width: 100% !important;
   height: 100% !important;
 }
 
-/* Map */
-.map-card .card-body{
-  background: color-mix(in srgb, var(--app-bg-1) 85%, rgba(15,23,42,0.03));
+.map-frame{
+  position: relative;
 }
 
 .map-container{
-  height: min(72vh, 720px);
+  height: min(72vh, 760px);
   min-height: 520px;
   width: 100%;
   border-bottom-left-radius: var(--app-radius);
@@ -160,41 +191,119 @@ body{
 
 @media (max-width: 576px){
   .map-container{
-    height: 60vh;
+    height: 62vh;
     min-height: 420px;
   }
 }
 
-/* Legend (floats on top of map) */
-.map-legend-float{
+.map-overlay{
   position: absolute;
+  top: 12px;
+  z-index: 500;
+  pointer-events: none;
+}
+
+.map-overlay-left{
+  left: 12px;
+  width: 300px;
+}
+
+.map-overlay-right{
   right: 12px;
-  bottom: 12px;
-  width: 280px;
-  max-height: 46%;
-  overflow: auto;
+  width: 320px;
+}
+
+.map-overlay-card{
+  pointer-events: auto;
   background: rgba(255,255,255,0.92);
-  border: 1px solid var(--app-border);
-  border-radius: var(--app-radius-sm);
-  padding: 10px 12px;
+  border: 1px solid rgba(15,23,42,0.14);
+  border-radius: var(--app-radius);
   box-shadow: var(--app-shadow);
-  backdrop-filter: blur(8px);
+  padding: 12px;
+  backdrop-filter: blur(10px);
+  max-height: calc(min(72vh, 760px) - 24px);
+  overflow: auto;
+}
+
+.map-overlay-title{
+  font-size: 12px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--app-text-muted);
+  margin-bottom: 10px;
+}
+
+.map-kpi-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+
+.map-kpi{
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,0.10);
+  background: rgba(255,255,255,0.72);
+}
+
+.map-kpi-icon{
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--brand-primary) 12%, #fff);
+  color: var(--brand-primary);
+  flex: 0 0 auto;
+}
+
+.map-kpi-body{ min-width: 0; }
+
+.map-kpi .kpi-label{ margin-bottom: 4px; }
+.map-kpi .kpi-value{ font-size: 18px; }
+.map-kpi .kpi-sub{ margin-top: 2px; }
+
+.map-control-card{
+  background: color-mix(in srgb, var(--app-bg-0) 85%, rgba(11,95,170,0.06));
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+@media (max-width: 992px){
+  .map-overlay-left{ width: 260px; }
+  .map-overlay-right{ width: 280px; }
 }
 
 @media (max-width: 576px){
-  .map-legend-float{
-    right: 10px;
-    left: 10px;
+  .map-overlay{
+    position: static;
     width: auto;
-    max-height: 38%;
+    margin: 10px 12px 0;
+    pointer-events: auto;
   }
+  .map-overlay-card{
+  pointer-events: auto;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(15,23,42,0.14);
+  border-radius: var(--app-radius);
+  box-shadow: var(--app-shadow);
+  padding: 12px;
+  backdrop-filter: blur(10px);
+  max-height: calc(min(72vh, 760px) - 24px);
+  overflow: auto;
+}
+  .map-kpi-grid{ grid-template-columns: 1fr 1fr; }
 }
 
 .map-legend{
   display: grid;
   gap: 6px;
 }
-
 .legend-row{
   display:flex;
   align-items:center;
@@ -207,7 +316,6 @@ body{
   border: 1px solid var(--app-border);
 }
 
-/* Loading overlay */
 .loading-overlay{
   position: fixed;
   inset: 0;
@@ -228,11 +336,53 @@ body{
   text-align:center;
 }
 
-/* Tabulator */
 .tabulator{
   border-radius: var(--app-radius);
   border: 1px solid var(--app-border);
 }
 
+#dataMetaText{
+  white-space: pre-line;
+}
 
-.map-legend-float:empty{ display: none; }
+
+/* Leaflet marker cluster – brand styling */
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large{
+  background-color: rgba(251,148,69,0.24);
+}
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div{
+  background-color: rgba(251,148,69,0.92);
+  color: #fff;
+  font-weight: 800;
+}
+
+.leaflet-control-zoom a,
+.leaflet-control-layers-toggle{
+  border-radius: 10px !important;
+}
+
+
+/* Tabs – cleaner, pill-like */
+.nav-tabs{
+  border-bottom: 0;
+  gap: 8px;
+}
+.nav-tabs .nav-link{
+  border-radius: 999px;
+  border: 1px solid transparent;
+  color: var(--app-text-muted);
+  padding: 8px 12px;
+}
+.nav-tabs .nav-link:hover{
+  border-color: rgba(15,23,42,0.14);
+  background: rgba(255,255,255,0.55);
+}
+.nav-tabs .nav-link.active{
+  background: color-mix(in srgb, var(--brand-primary) 14%, #fff);
+  border-color: color-mix(in srgb, var(--brand-primary) 28%, #fff);
+  color: var(--app-text-strong);
+}

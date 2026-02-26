@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>HAND Mapping Platform</title>
 
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <!-- Bootstrap + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -20,18 +25,18 @@
   <!-- Custom styles -->
   <link href="assets/css/styles.css" rel="stylesheet" />
 
-  <meta name="description" content="HAND Mapping Platform — interactive map and analytics for Informal Settlements (Lebanon)." />
-  <link rel="icon" type="image/png" href="assets/img/hand_logo.png" />
+  <meta name="description" content="HAND Mapping Platform – interactive map and dashboard for Lebanon informal settlements." />
 </head>
 
 <body>
-  <nav class="navbar navbar-expand-lg border-bottom bg-body-tertiary sticky-top app-navbar">
+  <!-- Top Bar -->
+  <nav class="navbar navbar-expand-lg border-bottom sticky-top app-navbar">
     <div class="container-fluid">
-      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
-        <img src="assets/img/hand_logo.png" alt="HAND Human Aid &amp; Development" class="brand-logo" />
-        <div class="d-flex flex-column lh-1">
-          <span class="fw-semibold">HAND Mapping Platform</span>
-          <span class="small text-body-secondary d-none d-sm-inline">Informal Settlements — Lebanon</span>
+      <a class="navbar-brand d-flex align-items-center gap-3" href="#" aria-label="HAND Mapping Platform">
+        <img src="assets/img/hand.png" class="brand-logo" alt="HAND Human Aid &amp; Development" />
+        <div class="d-flex flex-column lh-sm">
+          <span class="brand-title">HAND Mapping Platform</span>
+          <span class="brand-subtitle d-none d-sm-inline">Informal Settlements • Lebanon</span>
         </div>
       </a>
 
@@ -41,34 +46,35 @@
           <span class="small text-body-secondary" id="lastUpdatedText">—</span>
         </div>
 
-        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#dataPanel" aria-controls="dataPanel" title="Data sources and notes">
-          <i class="bi bi-info-circle"></i> Info
+        <button class="btn btn-light btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#dataPanel" aria-controls="dataPanel">
+          <i class="bi bi-info-circle"></i> Data
         </button>
       </div>
     </div>
   </nav>
 
-  <!-- Offcanvas: Data & Notes -->
+  <!-- Offcanvas: Data Source -->
   <div class="offcanvas offcanvas-end" tabindex="-1" id="dataPanel" aria-labelledby="dataPanelLabel">
     <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="dataPanelLabel"><i class="bi bi-info-circle"></i> Data &amp; notes</h5>
+      <h5 class="offcanvas-title" id="dataPanelLabel"><i class="bi bi-info-circle"></i> Data &amp; Notes</h5>
       <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
 
     <div class="offcanvas-body">
       <div class="alert alert-light border small mb-3">
-        <div class="fw-semibold mb-1">What you are looking at</div>
+        <div class="fw-semibold mb-1">What this platform shows</div>
         <div>
-          This platform visualizes the <b>IAMP sites mapping</b> dataset with administrative boundaries for Lebanon.
-          Filters apply across charts, the map, and exports.
+          An interactive mapping snapshot of informal settlements in Lebanon.
+          Use filters to explore site status, phone assessment progress, and data-quality flags.
         </div>
+        <div class="text-body-secondary mt-2">This public build does not include personal contact details.</div>
       </div>
 
       <div class="card mb-3">
         <div class="card-body">
           <div class="d-flex align-items-center justify-content-between">
-            <div class="fw-semibold">Loaded asset</div>
-            <span class="text-body-secondary small"><code>assets/data/sites.json</code></span>
+            <div class="fw-semibold">Data snapshot</div>
+            <span class="text-body-secondary small" id="dataSourceHint">—</span>
           </div>
           <div class="small text-body-secondary mt-2" id="dataMetaText">—</div>
 
@@ -78,19 +84,7 @@
             </button>
           </div>
 
-          <div class="form-text mt-2">
-            This public build is designed to avoid exposing personal data.
-          </div>
-        </div>
-      </div>
-
-      <div class="card mb-3">
-        <div class="card-body">
-          <div class="fw-semibold mb-2">Disclaimer</div>
-          <div class="small text-body-secondary">
-            This map is for information and operational planning only.
-            Names and boundaries shown do not imply official endorsement or acceptance.
-          </div>
+          <div class="form-text mt-2">Tip: export only aggregated fields for public sharing.</div>
         </div>
       </div>
 
@@ -112,70 +106,9 @@
   <!-- Main Layout -->
   <div class="container-fluid app-shell">
     <div class="row g-0">
-      <!-- Sidebar -->
+      <!-- Sidebar: Filters -->
       <aside class="col-12 col-lg-3 col-xxl-2 border-end sidebar">
         <div class="p-3">
-
-          <!-- Snapshot -->
-          <div class="card sidebar-card mb-3">
-            <div class="card-header py-2 d-flex align-items-center justify-content-between">
-              <div class="fw-semibold small"><i class="bi bi-activity"></i> Snapshot</div>
-              <span class="badge text-bg-light border" title="Updates as you filter">Live</span>
-            </div>
-            <div class="card-body p-2">
-              <div class="snapshot-grid">
-                <div class="snapshot-item">
-                  <div class="snapshot-label">Total records</div>
-                  <div class="snapshot-value" id="kpiTotal">—</div>
-                  <div class="snapshot-sub" id="kpiTotalSub">—</div>
-                </div>
-
-                <div class="snapshot-item">
-                  <div class="snapshot-label">Assessed</div>
-                  <div class="snapshot-value" id="kpiAssessed">—</div>
-                  <div class="snapshot-sub" id="kpiAssessedSub">—</div>
-                </div>
-
-                <div class="snapshot-item">
-                  <div class="snapshot-label">Active sites</div>
-                  <div class="snapshot-value" id="kpiActive">—</div>
-                  <div class="snapshot-sub" id="kpiActiveSub">—</div>
-                </div>
-
-                <div class="snapshot-item">
-                  <div class="snapshot-label">QC issue records</div>
-                  <div class="snapshot-value" id="kpiQC">—</div>
-                  <div class="snapshot-sub" id="kpiQCSub">—</div>
-                </div>
-
-                <div class="snapshot-item">
-                  <div class="snapshot-label">Households (active)</div>
-                  <div class="snapshot-value" id="kpiHH">—</div>
-                  <div class="snapshot-sub" id="kpiHHSub">—</div>
-                </div>
-
-                <div class="snapshot-item">
-                  <div class="snapshot-label">Individuals (active)</div>
-                  <div class="snapshot-value" id="kpiIND">—</div>
-                  <div class="snapshot-sub" id="kpiINDSub">—</div>
-                </div>
-
-                <div class="snapshot-item">
-                  <div class="snapshot-label">Structures (active)</div>
-                  <div class="snapshot-value" id="kpiStruct">—</div>
-                  <div class="snapshot-sub" id="kpiStructSub">—</div>
-                </div>
-
-                <div class="snapshot-item">
-                  <div class="snapshot-label">Latrines (active)</div>
-                  <div class="snapshot-value" id="kpiLat">—</div>
-                  <div class="snapshot-sub" id="kpiLatSub">—</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Filters -->
           <div class="d-flex align-items-center justify-content-between mb-2">
             <div class="fw-semibold"><i class="bi bi-funnel"></i> Filters</div>
             <button class="btn btn-sm btn-outline-secondary" id="resetFiltersBtn" type="button">
@@ -220,51 +153,6 @@
 
           <hr class="my-3">
 
-          <!-- Map settings -->
-          <div class="fw-semibold mb-2"><i class="bi bi-map"></i> Map settings</div>
-
-          <div class="mb-2">
-            <label class="form-label small mb-1">Markers: color by</label>
-            <select class="form-select" id="mapColorBy">
-              <option value="site_status">Site Status</option>
-              <option value="qc_any_issue">QC – Any issue</option>
-              <option value="phone_status">Phone call status</option>
-            </select>
-          </div>
-
-          <div class="form-check form-switch mb-2">
-            <input class="form-check-input" type="checkbox" role="switch" id="toggleCluster" checked>
-            <label class="form-check-label small" for="toggleCluster">Cluster markers</label>
-          </div>
-
-          <div class="card bg-body-tertiary border-0 mb-2">
-            <div class="card-body p-3">
-              <div class="fw-semibold small mb-2">Choropleth</div>
-
-              <label class="form-label small mb-1">Level</label>
-              <select class="form-select form-select-sm mb-2" id="choroplethLevel">
-                <option value="adm2">District</option>
-                <option value="adm3">Cadaster</option>
-              </select>
-
-              <label class="form-label small mb-1">Metric</label>
-              <select class="form-select form-select-sm" id="choroplethMetric">
-                <option value="individuals_active">Individuals (active)</option>
-                <option value="households_active">Households (active)</option>
-                <option value="qc_rate">QC any-issue %</option>
-                <option value="assessed_rate">Assessed %</option>
-                <option value="sites_count">Sites count</option>
-              </select>
-
-              <div class="form-check form-switch mt-2">
-                <input class="form-check-input" type="checkbox" role="switch" id="toggleChoropleth" checked>
-                <label class="form-check-label small" for="toggleChoropleth">Show choropleth</label>
-              </div>
-            </div>
-          </div>
-
-          <hr class="my-3">
-
           <div class="d-grid gap-2">
             <button class="btn btn-outline-primary" id="downloadFilteredBtn" type="button">
               <i class="bi bi-download"></i> Export filtered CSV
@@ -272,21 +160,23 @@
           </div>
 
           <div class="mt-3 small text-body-secondary">
-            <div class="fw-semibold mb-1">Tip</div>
-            <div>Click a district/cadaster polygon to filter. Use <b>Clear</b> to remove map selection.</div>
+            <div class="fw-semibold mb-1">Notes</div>
+            <ul class="ps-3 mb-0">
+              <li>Admin filtering uses PCODEs from the boundary join.</li>
+              <li>QC flags highlight records that may need review (for example: missing coordinates or missing key fields).</li>
+            </ul>
           </div>
         </div>
       </aside>
 
-      <!-- Main content -->
+      <!-- Main Content -->
       <main class="col-12 col-lg-9 col-xxl-10">
         <div class="p-3 p-lg-4">
-
-          <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
             <div>
-              <h1 class="h4 mb-1">Interactive settlement map &amp; analytics</h1>
+              <h1 class="h5 mb-1">Lebanon Informal Settlements – Interactive Map</h1>
               <div class="text-body-secondary small">
-                Filters apply across the map, charts, and exports.
+                A public-facing mapping view with filters, indicators, and data quality flags.
               </div>
             </div>
 
@@ -297,41 +187,21 @@
             </div>
           </div>
 
-          <!-- Map (front page) -->
-          <section class="mb-3" aria-label="Interactive map">
-            <div class="card map-card">
-              <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <div class="fw-semibold">Lebanon interactive map</div>
-                <div class="d-flex align-items-center gap-2">
-                  <button class="btn btn-sm btn-outline-secondary" id="fitLebanonBtn" type="button"><i class="bi bi-arrows-move"></i> Fit</button>
-                  <button class="btn btn-sm btn-outline-secondary" id="clearMapBtn" type="button"><i class="bi bi-x-circle"></i> Clear</button>
-                </div>
-              </div>
-
-              <div class="card-body p-0 position-relative">
-                <div id="lebanonMap" class="map-container"></div>
-                <div id="mapLegend" class="map-legend map-legend-float small"></div>
-              </div>
-
-              <div class="card-footer small text-body-secondary d-flex flex-wrap justify-content-between gap-2">
-                <span id="mapStatusText">—</span>
-                <span class="text-body-secondary">
-                  Disclaimer: Names and boundaries shown do not imply official endorsement or acceptance.
-                </span>
-              </div>
-            </div>
-          </section>
-
           <!-- Tabs -->
           <ul class="nav nav-tabs mb-3" id="mainTabs" role="tablist">
             <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="tab-overview" data-bs-toggle="tab" data-bs-target="#pane-overview" type="button" role="tab">
+              <button class="nav-link active" id="tab-map" data-bs-toggle="tab" data-bs-target="#pane-map" type="button" role="tab">
+                <i class="bi bi-geo-alt"></i> Map
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-overview" data-bs-toggle="tab" data-bs-target="#pane-overview" type="button" role="tab">
                 <i class="bi bi-speedometer2"></i> Insights
               </button>
             </li>
             <li class="nav-item" role="presentation">
               <button class="nav-link" id="tab-quality" data-bs-toggle="tab" data-bs-target="#pane-quality" type="button" role="tab">
-                <i class="bi bi-shield-check"></i> Data quality
+                <i class="bi bi-shield-check"></i> Data Quality
               </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -342,141 +212,324 @@
           </ul>
 
           <div class="tab-content" id="mainTabsContent">
-            <section aria-labelledby="tab-overview" class="tab-pane fade show active" id="pane-overview" role="tabpanel" tabindex="0">
-<div class="row g-3">
-<div class="col-12 col-xl-6">
-<div class="card chart-card h-100">
-<div class="card-header d-flex align-items-center justify-content-between">
-<div class="fw-semibold">Assessment progress</div>
-<button class="btn btn-sm btn-outline-secondary" data-download-chart="chartAssessment"><i class="bi bi-image"></i></button>
-</div>
-<div class="card-body">
-<div class="chart-wrap"><canvas id="chartAssessment"></canvas></div>
-<div class="small text-body-secondary mt-2" id="assessmentNote">—</div>
-</div>
-</div>
-</div>
-<div class="col-12 col-xl-6">
-<div class="card chart-card h-100">
-<div class="card-header d-flex align-items-center justify-content-between">
-<div class="fw-semibold">Site status mix</div>
-<button class="btn btn-sm btn-outline-secondary" data-download-chart="chartSiteStatus"><i class="bi bi-image"></i></button>
-</div>
-<div class="card-body">
-<div class="chart-wrap"><canvas id="chartSiteStatus"></canvas></div>
-<div class="small text-body-secondary mt-2">Blank values are treated as “Not recorded”.</div>
-</div>
-</div>
-</div>
-<div class="col-12 col-xl-6">
-<div class="card chart-card h-100">
-<div class="card-header d-flex align-items-center justify-content-between">
-<div class="fw-semibold">Phone call outcomes (assessed)</div>
-<button class="btn btn-sm btn-outline-secondary" data-download-chart="chartPhoneOutcomes"><i class="bi bi-image"></i></button>
-</div>
-<div class="card-body">
-<div class="chart-wrap chart-wrap-tall"><canvas id="chartPhoneOutcomes"></canvas></div>
-</div>
-</div>
-</div>
-<div class="col-12 col-xl-6">
-<div class="card chart-card h-100">
-<div class="card-header d-flex align-items-center justify-content-between">
-<div class="fw-semibold">Active sites – structure mix</div>
-<button class="btn btn-sm btn-outline-secondary" data-download-chart="chartStructures"><i class="bi bi-image"></i></button>
-</div>
-<div class="card-body">
-<div class="chart-wrap chart-wrap-tall"><canvas id="chartStructures"></canvas></div>
-<div class="small text-body-secondary mt-2">Aggregated counts from active sites only.</div>
-</div>
-</div>
-</div>
-<div class="col-12">
-<div class="card chart-card">
-<div class="card-header d-flex align-items-center justify-content-between">
-<div class="fw-semibold">Top cadasters by active individuals</div>
-<button class="btn btn-sm btn-outline-secondary" data-download-chart="chartTopCadaster"><i class="bi bi-image"></i></button>
-</div>
-<div class="card-body">
-<div class="chart-wrap chart-wrap-wide"><canvas id="chartTopCadaster"></canvas></div>
-<div class="small text-body-secondary mt-2">Top 10 (filtered). Click a bar to filter.</div>
-</div>
-</div>
-</div>
-</div>
-</section>
-            <section aria-labelledby="tab-quality" class="tab-pane fade" id="pane-quality" role="tabpanel" tabindex="0">
-<div class="row g-3">
-<div class="col-12 col-xl-7">
-<div class="card chart-card h-100">
-<div class="card-header d-flex align-items-center justify-content-between">
-<div class="fw-semibold">QC issues by type</div>
-<button class="btn btn-sm btn-outline-secondary" data-download-chart="chartQC"><i class="bi bi-image"></i></button>
-</div>
-<div class="card-body">
-<div class="chart-wrap chart-wrap-tall"><canvas id="chartQC"></canvas></div>
-<div class="small text-body-secondary mt-2">QC checks include missing coordinates, missing status for assessed sites, missing totals, and inactive-without-date signals.</div>
-</div>
-</div>
-</div>
-<div class="col-12 col-xl-5">
-<div class="card h-100">
-<div class="card-header">
-<div class="fw-semibold">QC guidance</div>
-<div class="small text-body-secondary">Practical remediation hints.</div>
-</div>
-<div class="card-body">
-<div class="accordion" id="qcAccordion">
-<!-- filled by JS -->
-</div>
-</div>
-</div>
-</div>
-<div class="col-12">
-<div class="card">
-<div class="card-header d-flex align-items-center justify-content-between">
-<div class="fw-semibold">QC issue records (preview)</div>
-<div class="d-flex align-items-center gap-2">
-<button class="btn btn-sm btn-outline-secondary" id="downloadQCBtn" type="button">
-<i class="bi bi-download"></i> Export QC-only CSV
+            <!-- Insights -->
+            <section class="tab-pane fade" id="pane-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
+              <div class="row g-3">
+                <div class="col-12 col-xl-6">
+                  <div class="card chart-card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">Assessment progress</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartAssessment"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <div class="chart-wrap"><canvas id="chartAssessment"></canvas></div>
+                      <div class="small text-body-secondary mt-2" id="assessmentNote">—</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-xl-6">
+                  <div class="card chart-card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">Site status mix</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartSiteStatus"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <div class="chart-wrap"><canvas id="chartSiteStatus"></canvas></div>
+                      <div class="small text-body-secondary mt-2">Blank values are treated as “Not recorded”.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-xl-6">
+                  <div class="card chart-card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">Phone call outcomes (assessed)</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartPhoneOutcomes"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <div class="chart-wrap chart-wrap-tall"><canvas id="chartPhoneOutcomes"></canvas></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-xl-6">
+                  <div class="card chart-card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">Active sites – structure mix</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartStructures"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <div class="chart-wrap chart-wrap-tall"><canvas id="chartStructures"></canvas></div>
+                      <div class="small text-body-secondary mt-2">Aggregated counts from active sites only.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="card chart-card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">Top cadasters by active individuals</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartTopCadaster"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <div class="chart-wrap chart-wrap-wide"><canvas id="chartTopCadaster"></canvas></div>
+                      <div class="small text-body-secondary mt-2">Top 10 (filtered). Click a bar to filter.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Map -->
+            <section class="tab-pane fade show active" id="pane-map" role="tabpanel" aria-labelledby="tab-map" tabindex="0">
+              <div class="row g-3">
+                <div class="col-12">
+                  <div class="card map-hero-card">
+                    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                      <div>
+                        <div class="fw-semibold">Lebanon interactive map</div>
+                        <div class="small text-body-secondary">Click a district/cadaster to filter. Use the left panel to refine and export.</div>
+                      </div>
+                      <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" id="fitLebanonBtn" type="button"><i class="bi bi-arrows-move"></i> Fit</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="clearMapBtn" type="button"><i class="bi bi-x-circle"></i> Clear</button>
+                      </div>
+                    </div>
+
+                    <div class="card-body p-0">
+                      <div class="map-frame">
+                        <div id="lebanonMap" class="map-container"></div>
+
+                        <!-- Left overlay: snapshot KPIs -->
+                        <div class="map-overlay map-overlay-left">
+                          <div class="map-overlay-card">
+                            <div class="map-overlay-title">Snapshot</div>
+                            <div class="map-kpi-grid">
+                              <div class="map-kpi">
+                                <div class="map-kpi-icon"><i class="bi bi-collection"></i></div>
+                                <div class="map-kpi-body">
+                                  <div class="kpi-label">Total records</div>
+                                  <div class="kpi-value" id="kpiTotal">—</div>
+                                  <div class="kpi-sub" id="kpiTotalSub">—</div>
+                                </div>
+                              </div>
+                              <div class="map-kpi">
+                                <div class="map-kpi-icon"><i class="bi bi-telephone-check"></i></div>
+                                <div class="map-kpi-body">
+                                  <div class="kpi-label">Assessed</div>
+                                  <div class="kpi-value" id="kpiAssessed">—</div>
+                                  <div class="kpi-sub" id="kpiAssessedSub">—</div>
+                                </div>
+                              </div>
+                              <div class="map-kpi">
+                                <div class="map-kpi-icon"><i class="bi bi-house-check"></i></div>
+                                <div class="map-kpi-body">
+                                  <div class="kpi-label">Active sites</div>
+                                  <div class="kpi-value" id="kpiActive">—</div>
+                                  <div class="kpi-sub" id="kpiActiveSub">—</div>
+                                </div>
+                              </div>
+                              <div class="map-kpi">
+                                <div class="map-kpi-icon"><i class="bi bi-shield-exclamation"></i></div>
+                                <div class="map-kpi-body">
+                                  <div class="kpi-label">QC issue records</div>
+                                  <div class="kpi-value" id="kpiQC">—</div>
+                                  <div class="kpi-sub" id="kpiQCSub">—</div>
+                                </div>
+                              </div>
+                              <div class="map-kpi">
+                                <div class="map-kpi-icon"><i class="bi bi-house"></i></div>
+                                <div class="map-kpi-body">
+                                  <div class="kpi-label">Households (active)</div>
+                                  <div class="kpi-value" id="kpiHH">—</div>
+                                  <div class="kpi-sub" id="kpiHHSub">—</div>
+                                </div>
+                              </div>
+                              <div class="map-kpi">
+                                <div class="map-kpi-icon"><i class="bi bi-people"></i></div>
+                                <div class="map-kpi-body">
+                                  <div class="kpi-label">Individuals (active)</div>
+                                  <div class="kpi-value" id="kpiIND">—</div>
+                                  <div class="kpi-sub" id="kpiINDSub">—</div>
+                                </div>
+                              </div>
+                              <div class="map-kpi">
+                                <div class="map-kpi-icon"><i class="bi bi-building"></i></div>
+                                <div class="map-kpi-body">
+                                  <div class="kpi-label">Structures (active)</div>
+                                  <div class="kpi-value" id="kpiStruct">—</div>
+                                  <div class="kpi-sub" id="kpiStructSub">—</div>
+                                </div>
+                              </div>
+                              <div class="map-kpi">
+                                <div class="map-kpi-icon"><i class="bi bi-droplet"></i></div>
+                                <div class="map-kpi-body">
+                                  <div class="kpi-label">Latrines (active)</div>
+                                  <div class="kpi-value" id="kpiLat">—</div>
+                                  <div class="kpi-sub" id="kpiLatSub">—</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Right overlay: controls + legend -->
+                        <div class="map-overlay map-overlay-right">
+                          <div class="map-overlay-card">
+                            <div class="map-overlay-title">Layers &amp; legend</div>
+
+                            <div class="mb-3">
+                              <label class="form-label small mb-1">Markers: color by</label>
+                              <select class="form-select form-select-sm" id="mapColorBy">
+                                <option value="single">All sites</option>
+                                <option value="site_status">Site Status</option>
+                                <option value="qc_any_issue">QC – Any issue</option>
+                                <option value="phone_status">Phone call status</option>
+                              </select>
+                            </div>
+
+                            <div class="form-check form-switch mb-3">
+                              <input class="form-check-input" type="checkbox" role="switch" id="toggleCluster" checked>
+                              <label class="form-check-label small" for="toggleCluster">Cluster markers</label>
+                            </div>
+
+                            <div class="map-control-card mb-3">
+                              <div class="fw-semibold small mb-2">Choropleth</div>
+
+                              <label class="form-label small mb-1">Level</label>
+                              <select class="form-select form-select-sm mb-2" id="choroplethLevel">
+                                <option value="adm2">District</option>
+                                <option value="adm3">Cadaster</option>
+                              </select>
+
+                              <label class="form-label small mb-1">Metric</label>
+                              <select class="form-select form-select-sm" id="choroplethMetric">
+                                <option value="individuals_active">Individuals (active)</option>
+                                <option value="households_active">Households (active)</option>
+                                <option value="qc_rate">QC any-issue %</option>
+                                <option value="assessed_rate">Assessed %</option>
+                                <option value="sites_count">Sites count</option>
+                              </select>
+
+                              <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" role="switch" id="toggleChoropleth" checked>
+                                <label class="form-check-label small" for="toggleChoropleth">Show choropleth</label>
+                              </div>
+                            </div>
+
+                            <div class="fw-semibold small mb-2">Legend</div>
+                            <div id="mapLegend" class="map-legend small"></div>
+
+                            <hr class="my-3">
+                            <div class="small text-body-secondary">
+                              <div class="fw-semibold text-body-emphasis mb-1">Interaction</div>
+                              <ul class="mb-0 ps-3">
+                                <li>Click a district/cadaster polygon to filter.</li>
+                                <li>Use <b>Clear</b> to remove map selection.</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="card-footer">
+                      <div class="small text-body-secondary d-flex flex-wrap justify-content-between gap-2">
+                        <span id="mapStatusText">—</span>
+                        <span>Boundaries: Lebanon Admin 1–3 (PCODE)</span>
+                      </div>
+                      <div class="small text-body-secondary mt-1">
+                        Disclaimer: The boundaries and names shown and the designations used on this map do not imply official endorsement or acceptance.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Data Quality -->
+            <section class="tab-pane fade" id="pane-quality" role="tabpanel" aria-labelledby="tab-quality" tabindex="0">
+              <div class="row g-3">
+                <div class="col-12 col-xl-7">
+                  <div class="card chart-card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">QC issues by type</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartQC"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <div class="chart-wrap chart-wrap-tall"><canvas id="chartQC"></canvas></div>
+                      <div class="small text-body-secondary mt-2">Counts reflect the QC flags available in the current dataset.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-xl-5">
+                  <div class="card h-100">
+                    <div class="card-header">
+                      <div class="fw-semibold">QC guidance</div>
+                      <div class="small text-body-secondary">Practical remediation hints.</div>
+                    </div>
+                    <div class="card-body">
+                      <div class="accordion" id="qcAccordion">
+                        <!-- filled by JS -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">QC issue records (preview)</div>
+                      <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" id="downloadQCBtn" type="button">
+                          <i class="bi bi-download"></i> Export QC-only CSV
                         </button>
-</div>
-</div>
-<div class="card-body">
-<div id="qcMiniTable"></div>
-<div class="small text-body-secondary mt-2">Use the Records tab for full exploration.</div>
-</div>
-</div>
-</div>
-</div>
-</section>
-            <section aria-labelledby="tab-records" class="tab-pane fade" id="pane-records" role="tabpanel" tabindex="0">
-<div class="card">
-<div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
-<div>
-<div class="fw-semibold">Records table</div>
-<div class="small text-body-secondary">Search, sort, export. (PII is not shipped in this build.)</div>
-</div>
-<div class="d-flex align-items-center gap-2">
-<button class="btn btn-sm btn-outline-secondary" id="downloadTableBtn" type="button">
-<i class="bi bi-download"></i> Export table CSV
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div id="qcMiniTable"></div>
+                      <div class="small text-body-secondary mt-2">Use the Records tab for full exploration.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Records -->
+            <section class="tab-pane fade" id="pane-records" role="tabpanel" aria-labelledby="tab-records" tabindex="0">
+              <div class="card">
+                <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                  <div>
+                    <div class="fw-semibold">Records table</div>
+                    <div class="small text-body-secondary">Search, sort, export. (This public view does not include personal contact details.)</div>
+                  </div>
+
+                  <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" id="downloadTableBtn" type="button">
+                      <i class="bi bi-download"></i> Export table CSV
                     </button>
-</div>
-</div>
-<div class="card-body">
-<div id="recordsTable"></div>
-</div>
-</div>
-</section>
+                  </div>
+                </div>
+
+                <div class="card-body">
+                  <div id="recordsTable"></div>
+                </div>
+              </div>
+            </section>
+
           </div>
 
+          <!-- Footer -->
           <footer class="mt-4 pt-3 border-top small text-body-secondary">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
               <div>
-                © 2026 HAND Human Aid &amp; Development
+                © 2026 HAND Human Aid &amp; Development. Boundaries and names are shown for reference and do not imply official endorsement.
               </div>
               <div>
                 <span class="me-2">v2026.02</span>
+                <a class="link-secondary me-2" href="https://hand.ngo/" target="_blank" rel="noopener">hand.ngo</a>
                 <a class="link-secondary" href="#" id="scrollTopLink">Back to top</a>
               </div>
             </div>
@@ -487,9 +540,9 @@
   </div>
 
   <!-- Loading overlay -->
-  <div id="loadingOverlay" class="loading-overlay">
+  <div id="loadingOverlay" class="loading-overlay d-none">
     <div class="loading-card">
-      <div class="spinner-border" role="status" aria-hidden="true"></div>
+      <div class="spinner-border" role="status" aria-label="Loading"></div>
       <div class="mt-3 fw-semibold">Loading data…</div>
       <div class="small text-body-secondary mt-1" id="loadingDetail">Fetching JSON</div>
     </div>
