@@ -1,5 +1,5 @@
-/* IAMP Dashboard – lightweight design system
-   Goal: consistent hierarchy, softer background, smaller charts, cleaner cards.
+/* HAND Mapping Platform – lightweight design system (light mode only)
+   Inspired by clean humanitarian reporting layouts (e.g., map-first, clear legend, compact KPIs).
 */
 
 :root{
@@ -36,46 +36,33 @@ html, body{
 }
 
 body{
-  background: radial-gradient(1200px 600px at 20% -10%, rgba(14,165,233,0.10), transparent 60%),
-              radial-gradient(900px 500px at 90% 10%, rgba(124,58,237,0.08), transparent 55%),
-              var(--app-bg-0);
+  color: var(--app-text-strong);
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(14,165,233,0.10), transparent 60%),
+    radial-gradient(900px 500px at 90% 10%, rgba(124,58,237,0.07), transparent 55%),
+    var(--app-bg-0);
 }
 
-[data-bs-theme="dark"]{
-  --app-bg-0: #0b1220;
-  --app-bg-1: #0f172a;
-  --app-card: #0f172a;
-
-  --app-text-strong: #e5e7eb;
-  --app-text-muted: #9ca3af;
-
-  --app-border: rgba(148, 163, 184, 0.20);
-
-  --app-shadow: 0 1px 2px rgba(0,0,0,0.50), 0 12px 28px rgba(0,0,0,0.35);
-  --app-shadow-sm: 0 1px 2px rgba(0,0,0,0.40);
-}
-
+/* Navbar */
 .app-navbar{
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--app-bg-1) 92%, rgba(14,165,233,0.06)) !important;
 }
 
-.brand-mark{
-  display:inline-flex;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  align-items: center;
-  justify-content: center;
-  background: rgba(14,165,233,0.12);
-  border: 1px solid var(--app-border);
+.brand-logo{
+  width: 44px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
+/* Layout */
 .app-shell{
   padding-bottom: 24px;
 }
 
 .sidebar{
-  background: color-mix(in srgb, var(--app-bg-1) 92%, rgba(14,165,233,0.08));
+  background: color-mix(in srgb, var(--app-bg-1) 94%, rgba(14,165,233,0.06));
 }
 
 @media (min-width: 992px){
@@ -87,6 +74,7 @@ body{
   }
 }
 
+/* Cards */
 .card{
   border-radius: var(--app-radius);
   border: 1px solid var(--app-border);
@@ -104,30 +92,41 @@ body{
   padding: 14px;
 }
 
-.kpi-card .card-body{
-  padding: 14px;
+/* Snapshot (KPIs) */
+.snapshot-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
-.kpi-label{
-  font-size: 12px;
+.snapshot-item{
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-sm);
+  padding: 10px 10px;
+  background: color-mix(in srgb, var(--app-bg-1) 92%, rgba(14,165,233,0.05));
+}
+
+.snapshot-label{
+  font-size: 11px;
   letter-spacing: .02em;
   color: var(--app-text-muted);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
-.kpi-value{
-  font-size: 28px;
-  font-weight: 700;
+.snapshot-value{
+  font-size: 20px;
+  font-weight: 750;
   line-height: 1.1;
   color: var(--app-text-strong);
 }
 
-.kpi-sub{
-  margin-top: 6px;
-  font-size: 12px;
+.snapshot-sub{
+  margin-top: 4px;
+  font-size: 11px;
   color: var(--app-text-muted);
 }
 
+/* Charts */
 .chart-card .card-body{
   padding-top: 12px;
 }
@@ -146,23 +145,56 @@ body{
   height: 100% !important;
 }
 
+/* Map */
 .map-card .card-body{
   background: color-mix(in srgb, var(--app-bg-1) 85%, rgba(15,23,42,0.03));
 }
+
 .map-container{
-  height: 560px;
+  height: min(72vh, 720px);
+  min-height: 520px;
   width: 100%;
   border-bottom-left-radius: var(--app-radius);
   border-bottom-right-radius: var(--app-radius);
 }
+
 @media (max-width: 576px){
-  .map-container{ height: 420px; }
+  .map-container{
+    height: 60vh;
+    min-height: 420px;
+  }
+}
+
+/* Legend (floats on top of map) */
+.map-legend-float{
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 280px;
+  max-height: 46%;
+  overflow: auto;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-sm);
+  padding: 10px 12px;
+  box-shadow: var(--app-shadow);
+  backdrop-filter: blur(8px);
+}
+
+@media (max-width: 576px){
+  .map-legend-float{
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-height: 38%;
+  }
 }
 
 .map-legend{
   display: grid;
   gap: 6px;
 }
+
 .legend-row{
   display:flex;
   align-items:center;
@@ -175,6 +207,7 @@ body{
   border: 1px solid var(--app-border);
 }
 
+/* Loading overlay */
 .loading-overlay{
   position: fixed;
   inset: 0;
@@ -195,7 +228,11 @@ body{
   text-align:center;
 }
 
+/* Tabulator */
 .tabulator{
   border-radius: var(--app-radius);
   border: 1px solid var(--app-border);
 }
+
+
+.map-legend-float:empty{ display: none; }

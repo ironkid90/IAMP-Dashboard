@@ -182,22 +182,18 @@
 
   // ---------- theme ----------
   function initTheme(){
+    // Light mode only (public / production default)
     const root = document.documentElement;
-    const saved = localStorage.getItem("iamp_theme");
-    if (saved === "dark" || saved === "light"){
-      root.setAttribute("data-bs-theme", saved);
-    }
-    $("themeToggle").addEventListener("click", () => {
-      const cur = root.getAttribute("data-bs-theme") || "light";
-      const next = (cur === "dark") ? "light" : "dark";
-      root.setAttribute("data-bs-theme", next);
-      localStorage.setItem("iamp_theme", next);
-      // Charts need a refresh to pick up new tick colors etc.
-      rebuildCharts();
-      // Leaflet tiles look fine; just refresh choropleth styling.
-      updateMap();
-    });
+    root.setAttribute("data-bs-theme", "light");
+
+    // If older builds stored a theme preference, ignore it.
+    try { localStorage.removeItem("iamp_theme"); } catch (e) {}
+
+    // Backward compatibility: if a theme toggle exists, hide it.
+    const btn = document.getElementById("themeToggle");
+    if (btn){ btn.style.display = "none"; }
   }
+
 
   // ---------- data load ----------
   async function loadJSON(url){
@@ -979,10 +975,21 @@
     state.map.map = map;
 
     // Base tiles
-    state.map.base = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "&copy; OpenStreetMap contributors"
+    state.map.base = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+      subdomains: "abcd",
+      maxZoom: 20,
+      attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
     }).addTo(map);
+
+    // Scale bar (metric)
+    L.control.scale({ imperial: false }).addTo(map);
+
+    // Keep Leaflet happy on resize (debounced)
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      if (resizeTimer) window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => { try { map.invalidateSize(); } catch(e) {} }, 120);
+    });
 
     // Marker layers
     state.map.cluster = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 40 });
