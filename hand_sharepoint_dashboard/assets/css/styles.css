@@ -3,13 +3,13 @@
 */
 
 :root{
-  --brand-primary: #0c61ad;
-  --brand-navy:    #083a6b;
-  --brand-accent:  #fb9445;
+  --brand-primary: #2868a8;
+  --brand-navy:    #1a4f8c;
+  --brand-accent:  #e8832a;
 
   /* Bootstrap theme hooks */
   --bs-primary: var(--brand-primary);
-  --bs-primary-rgb: 12, 97, 173;
+  --bs-primary-rgb: 40, 104, 168;
   --bs-link-color: var(--brand-primary);
 
   --app-bg-0: #f6f8fb;
@@ -350,12 +350,12 @@ body{
 .marker-cluster-small,
 .marker-cluster-medium,
 .marker-cluster-large{
-  background-color: rgba(251,148,69,0.24);
+  background-color: rgba(232,131,42,0.24);
 }
 .marker-cluster-small div,
 .marker-cluster-medium div,
 .marker-cluster-large div{
-  background-color: rgba(251,148,69,0.92);
+  background-color: rgba(232,131,42,0.92);
   color: #fff;
   font-weight: 800;
 }

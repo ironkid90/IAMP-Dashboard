@@ -15,11 +15,11 @@
   const fmtInt = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
   const fmtPct = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 
-  // Brand palette (HAND)
+  // Brand palette (HAND) – matched to the org logo
   const BRAND = {
-    primary: "#0c61ad",
-    navy: "#083a6b",
-    accent: "#fb9445",
+    primary: "#2868a8",
+    navy: "#1a4f8c",
+    accent: "#e8832a",
     slate: "#64748b",
     noData: "#e2e8f0",
   };
@@ -398,11 +398,22 @@
 
   // ---------- filtering ----------
   function applyFilters(){
+    // Capture current UI selections BEFORE rebuilding dropdowns so
+    // user-driven changes (especially cadaster) are not overwritten.
+    state.filters.search = $("searchInput").value.trim();
+    state.filters.gov = $("govFilter").value;
+    state.filters.district = $("districtFilter").value;
+    state.filters.cadaster = $("cadasterFilter").value;
+    state.filters.siteStatus = $("siteStatusFilter").value;
+    state.filters.phoneStatus = $("phoneStatusFilter").value;
+    state.filters.qc = $("qcFilter").value;
+
+    // Rebuild cascading dropdowns (may invalidate child selections when
+    // a parent level changed, e.g. district/cadaster after gov change).
     refreshAdminDropdowns();
     refreshOtherDropdowns();
 
-    // Pull current UI values into state (keeps us consistent even if a selection was invalidated)
-    state.filters.search = $("searchInput").value.trim();
+    // Re-read after refresh in case a selection was invalidated by cascade.
     state.filters.gov = $("govFilter").value;
     state.filters.district = $("districtFilter").value;
     state.filters.cadaster = $("cadasterFilter").value;
@@ -534,6 +545,29 @@
 
     $("kpiLat").textContent = fmtInt.format(lat);
     $("kpiLatSub").textContent = `Sum across active sites`;
+
+    // Update filter summary banner
+    updateFilterSummary(total);
+  }
+
+  function updateFilterSummary(total){
+    const el = $("filterSummaryText");
+    if (!el) return;
+    const f = state.filters;
+    const parts = [];
+    if (f.gov !== "all") parts.push(buildLabelFromMap(f.gov, state.lookups.adm1NameByCode));
+    if (f.district !== "all") parts.push(buildLabelFromMap(f.district, state.lookups.adm2NameByCode));
+    if (f.cadaster !== "all") parts.push(buildLabelFromMap(f.cadaster, state.lookups.adm3NameByCode));
+    if (f.siteStatus !== "all") parts.push(f.siteStatus);
+    if (f.phoneStatus !== "all") parts.push(f.phoneStatus);
+    if (f.qc !== "all") parts.push("QC filter active");
+    if (f.search) parts.push(`"${f.search}"`);
+
+    if (!parts.length){
+      el.textContent = `Showing all ${fmtInt.format(total)} records. Use the sidebar filters to refine.`;
+    } else {
+      el.textContent = `Filtered: ${parts.join(" · ")} — ${fmtInt.format(total)} records`;
+    }
   }
 
   function updateAssessmentNote(){

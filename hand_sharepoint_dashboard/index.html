@@ -153,12 +153,6 @@
 
           <hr class="my-3">
 
-          <div class="d-grid gap-2">
-            <button class="btn btn-outline-primary" id="downloadFilteredBtn" type="button">
-              <i class="bi bi-download"></i> Export filtered CSV
-            </button>
-          </div>
-
           <div class="mt-3 small text-body-secondary">
             <div class="fw-semibold mb-1">Notes</div>
             <ul class="ps-3 mb-0">
@@ -176,7 +170,7 @@
             <div>
               <h1 class="h5 mb-1">Lebanon Informal Settlements – Interactive Map</h1>
               <div class="text-body-secondary small">
-                A public-facing mapping view with filters, indicators, and data quality flags.
+                Explore site status, phone assessment progress, demographic indicators, and data-quality flags across Lebanon.
               </div>
             </div>
 
@@ -185,6 +179,12 @@
                 <i class="bi bi-link-45deg"></i> Share link
               </button>
             </div>
+          </div>
+
+          <!-- Active filter summary -->
+          <div class="alert alert-light border-start border-4 border-primary-subtle py-2 px-3 mb-3 small d-flex align-items-center gap-2" id="filterSummaryBanner">
+            <i class="bi bi-funnel text-primary"></i>
+            <span id="filterSummaryText">Showing all records. Use the sidebar filters to refine.</span>
           </div>
 
           <!-- Tabs -->
@@ -507,6 +507,9 @@
                   </div>
 
                   <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-primary" id="downloadFilteredBtn" type="button">
+                      <i class="bi bi-download"></i> Export filtered CSV
+                    </button>
                     <button class="btn btn-sm btn-outline-secondary" id="downloadTableBtn" type="button">
                       <i class="bi bi-download"></i> Export table CSV
                     </button>
