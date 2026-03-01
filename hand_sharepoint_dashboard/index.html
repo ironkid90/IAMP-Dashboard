@@ -250,7 +250,7 @@
             </li>
             <li class="nav-item" role="presentation">
               <button class="nav-link" id="tab-quality" data-bs-toggle="tab" data-bs-target="#pane-quality" type="button" role="tab">
-                <i class="bi bi-shield-check"></i> Data Quality
+                <i class="bi bi-shield-check"></i> Data completeness
               </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -443,14 +443,14 @@
                                   <div class="kpi-sub" id="kpiActiveSub">—</div>
                                 </div>
                               </div>
-                              <div class="map-kpi">
-                                <div class="map-kpi-icon"><i class="bi bi-shield-exclamation"></i></div>
-                                <div class="map-kpi-body">
-                                  <div class="kpi-label">QC issue records</div>
-                                  <div class="kpi-value" id="kpiQC">—</div>
-                                  <div class="kpi-sub" id="kpiQCSub">—</div>
+                                <div class="map-kpi">
+                                  <div class="map-kpi-icon"><i class="bi bi-shield-exclamation"></i></div>
+                                  <div class="map-kpi-body">
+                                    <div class="kpi-label">Flagged records</div>
+                                    <div class="kpi-value" id="kpiQC">—</div>
+                                    <div class="kpi-sub" id="kpiQCSub">—</div>
+                                  </div>
                                 </div>
-                              </div>
                               <div class="map-kpi">
                                 <div class="map-kpi-icon"><i class="bi bi-house"></i></div>
                                 <div class="map-kpi-body">
@@ -494,12 +494,12 @@
 
                             <div class="mb-3">
                               <label class="form-label small mb-1">Markers: color by</label>
-                              <select class="form-select form-select-sm" id="mapColorBy">
-                                <option value="single">All sites</option>
-                                <option value="site_status">Site Status</option>
-                                <option value="qc_any_issue">QC – Any issue</option>
-                                <option value="phone_status">Phone call status</option>
-                              </select>
+                                <select class="form-select form-select-sm" id="mapColorBy">
+                                  <option value="single">All sites</option>
+                                  <option value="site_status">Site Status</option>
+                                  <option value="qc_any_issue">Completeness flags</option>
+                                  <option value="phone_status">Phone call status</option>
+                                </select>
                             </div>
 
                             <div class="form-check form-switch mb-3">
@@ -567,12 +567,12 @@
                 <div class="col-12 col-xl-7">
                   <div class="card chart-card h-100">
                     <div class="card-header d-flex align-items-center justify-content-between">
-                      <div class="fw-semibold">QC issues by type</div>
+                      <div class="fw-semibold">Completeness flags by type</div>
                       <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartQC"><i class="bi bi-image"></i></button>
                     </div>
                     <div class="card-body">
                       <div class="chart-wrap chart-wrap-tall"><canvas id="chartQC"></canvas></div>
-                      <div class="small text-body-secondary mt-2">Counts reflect the QC flags available in the current dataset.</div>
+                      <div class="small text-body-secondary mt-2">Flags highlight missing or inconsistent fields. They are not necessarily errors.</div>
                     </div>
                   </div>
                 </div>
@@ -580,7 +580,7 @@
                 <div class="col-12 col-xl-5">
                   <div class="card h-100">
                     <div class="card-header">
-                      <div class="fw-semibold">QC guidance</div>
+                      <div class="fw-semibold">Guidance</div>
                       <div class="small text-body-secondary">Practical remediation hints.</div>
                     </div>
                     <div class="card-body">
@@ -594,10 +594,10 @@
                 <div class="col-12">
                   <div class="card">
                     <div class="card-header d-flex align-items-center justify-content-between">
-                      <div class="fw-semibold">QC issue records (preview)</div>
+                      <div class="fw-semibold">Flagged records (preview)</div>
                       <div class="d-flex align-items-center gap-2">
                         <button class="btn btn-sm btn-outline-secondary" id="downloadQCBtn" type="button">
-                          <i class="bi bi-download"></i> Export QC-only CSV
+                          <i class="bi bi-download"></i> Export flagged CSV
                         </button>
                       </div>
                     </div>

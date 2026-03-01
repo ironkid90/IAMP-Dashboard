@@ -222,19 +222,35 @@ def main():
         for col in ["adm1_pcode","adm2_pcode","adm3_pcode"]:
             df.loc[miss, col] = df.loc[miss, "adm_key"].map(mapping[col])
 
-    # 4) Lightweight QC flags
-    df["qc_missing_coords"] = df["Latitude"].isna() | df["Longitude"].isna()
-    df["qc_missing_site_status"] = df["assessed"] & df["Site Status"].apply(is_blank)
-    df["qc_missing_totals_active"] = (df["Site Status"].astype(str).str.strip() == "Active") & df[["Total number of Individuals","Total number of Households","Total number of Structures"]].isna().any(axis=1)
-    df["qc_inactive_missing_date"] = df["Site Status"].astype(str).str.contains("Inactive|Demolished", case=False, na=False) & df["Date of when site is Inactive or full demolish sites"].apply(is_blank)
+    # 4) Data validation / completeness flags
+    # IMPORTANT: these are not necessarily "errors". They mainly represent incomplete
+    # reporting (still being collected) and "blocking" issues for certain views (ex: map).
+    df["flag_missing_coords"] = df["Latitude"].isna() | df["Longitude"].isna()
+    df["flag_missing_site_status"] = df["assessed"] & df["Site Status"].apply(is_blank)
+    df["flag_missing_totals_active"] = (df["Site Status"].astype(str).str.strip() == "Active") & df[["Total number of Individuals","Total number of Households","Total number of Structures"]].isna().any(axis=1)
+    df["flag_inactive_missing_date"] = df["Site Status"].astype(str).str.contains("Inactive|Demolished", case=False, na=False) & df["Date of when site is Inactive or full demolish sites"].apply(is_blank)
 
-    qc_cols = ["qc_missing_coords","qc_missing_site_status","qc_missing_totals_active","qc_inactive_missing_date"]
-    df["qc_issue_count"] = df[qc_cols].sum(axis=1)
-    df["qc_any_issue"] = df["qc_issue_count"] > 0
+    flag_cols = ["flag_missing_coords","flag_missing_site_status","flag_missing_totals_active","flag_inactive_missing_date"]
+    df["flags_count"] = df[flag_cols].sum(axis=1)
+    df["flags_any"] = df["flags_count"] > 0
 
     # 5) Build redacted canonical JSON
     sites = []
     for _, r in df.iterrows():
+        # Flag severities (report-style):
+        # - blocking: prevents key functionality (map)
+        # - warning: incomplete for analysis / monitoring
+        # - info: useful but non-blocking completeness gap
+        flags = []
+        if bool(r.get("flag_missing_coords", False)):
+            flags.append({"key": "missing_coords", "severity": "blocking", "label": "Missing coordinates"})
+        if bool(r.get("flag_missing_site_status", False)):
+            flags.append({"key": "missing_site_status_when_assessed", "severity": "warning", "label": "Missing site status (assessed)"})
+        if bool(r.get("flag_missing_totals_active", False)):
+            flags.append({"key": "missing_totals_active", "severity": "warning", "label": "Active site missing totals"})
+        if bool(r.get("flag_inactive_missing_date", False)):
+            flags.append({"key": "inactive_missing_date", "severity": "info", "label": "Inactive/demolished missing date"})
+
         sites.append({
             "pcode": clean_str(r.get("PCode")),
             "name": clean_str(r.get("PCode Name")) or clean_str(r.get("Pcode_name")),
@@ -260,13 +276,24 @@ def main():
                 "prefab": clean_num(r.get("C- Number of Prefab Structure")),
                 "selfbuilt_concrete": clean_num(r.get("D- Number of Self-built Structures with Concrete Roof")),
             },
+            "validation": {
+                "flags_any": bool(r.get("flags_any", False)),
+                "flags_count": int(r.get("flags_count", 0)),
+                "flags": flags,
+                "missing_coords": bool(r.get("flag_missing_coords", False)),
+                "missing_site_status_when_assessed": bool(r.get("flag_missing_site_status", False)),
+                "missing_totals_active": bool(r.get("flag_missing_totals_active", False)),
+                "inactive_missing_date": bool(r.get("flag_inactive_missing_date", False)),
+            },
+
+            # Backward compatibility for older frontends still expecting qc.*
             "qc": {
-                "qc_any_issue": bool(r.get("qc_any_issue", False)),
-                "qc_issue_count": int(r.get("qc_issue_count", 0)),
-                "missing_coords": bool(r.get("qc_missing_coords", False)),
-                "missing_site_status_when_assessed": bool(r.get("qc_missing_site_status", False)),
-                "missing_totals_active": bool(r.get("qc_missing_totals_active", False)),
-                "inactive_missing_date": bool(r.get("qc_inactive_missing_date", False)),
+                "qc_any_issue": bool(r.get("flags_any", False)),
+                "qc_issue_count": int(r.get("flags_count", 0)),
+                "missing_coords": bool(r.get("flag_missing_coords", False)),
+                "missing_site_status_when_assessed": bool(r.get("flag_missing_site_status", False)),
+                "missing_totals_active": bool(r.get("flag_missing_totals_active", False)),
+                "inactive_missing_date": bool(r.get("flag_inactive_missing_date", False)),
             },
             "record_status": clean_str(r.get("Record status")),
             "partner": clean_str(r.get("Partner Name")),
@@ -281,6 +308,12 @@ def main():
         "counts": {
             "records": int(len(sites)),
             "with_coords": int(sum(1 for s in sites if s["lat"] is not None and s["lon"] is not None)),
+            # Prefer "flags_*" naming, keep legacy qc_any_issue.
+            "flags_any": int(sum(1 for s in sites if s["validation"]["flags_any"])),
+            "flags_missing_coords": int(sum(1 for s in sites if s["validation"]["missing_coords"])),
+            "flags_missing_site_status_when_assessed": int(sum(1 for s in sites if s["validation"]["missing_site_status_when_assessed"])),
+            "flags_missing_totals_active": int(sum(1 for s in sites if s["validation"]["missing_totals_active"])),
+            "flags_inactive_missing_date": int(sum(1 for s in sites if s["validation"]["inactive_missing_date"])),
             "qc_any_issue": int(sum(1 for s in sites if s["qc"]["qc_any_issue"])),
         },
     }
