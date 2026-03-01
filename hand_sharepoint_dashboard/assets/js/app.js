@@ -35,6 +35,11 @@
     return !t || t === "-" || t === "—" || t === "–" || t === "na" || t === "n/a" || t === "null" || t === "none";
   }
 
+  function normalizeCode(code){
+    if (code === null || code === undefined) return "";
+    return String(code).trim();
+  }
+
   function downloadText(filename, text){
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -246,21 +251,24 @@
     if (state.boundaries.adm1){
       for (const f of state.boundaries.adm1.features || []){
         const p = f.properties || {};
-        if (p.adm1_pcode) state.lookups.adm1NameByCode.set(String(p.adm1_pcode), p.adm1_name || String(p.adm1_pcode));
+        const code = normalizeCode(p.adm1_pcode);
+        if (code) state.lookups.adm1NameByCode.set(code, p.adm1_name || code);
       }
     }
     // Admin2
     if (state.boundaries.adm2){
       for (const f of state.boundaries.adm2.features || []){
         const p = f.properties || {};
-        if (p.adm2_pcode) state.lookups.adm2NameByCode.set(String(p.adm2_pcode), p.adm2_name || String(p.adm2_pcode));
+        const code = normalizeCode(p.adm2_pcode);
+        if (code) state.lookups.adm2NameByCode.set(code, p.adm2_name || code);
       }
     }
     // Admin3 (subset)
     if (state.boundaries.adm3){
       for (const f of state.boundaries.adm3.features || []){
         const p = f.properties || {};
-        if (p.adm3_pcode) state.lookups.adm3NameByCode.set(String(p.adm3_pcode), p.adm3_name || String(p.adm3_pcode));
+        const code = normalizeCode(p.adm3_pcode);
+        if (code) state.lookups.adm3NameByCode.set(code, p.adm3_name || code);
       }
     }
   }
@@ -281,7 +289,12 @@
       }
       state.meta = sitesData.meta || null;
       if (state.meta) state.meta._loaded_via = loadedVia;
-      state.raw = Array.isArray(sitesData.sites) ? sitesData.sites : [];
+      state.raw = (Array.isArray(sitesData.sites) ? sitesData.sites : []).map(s => ({
+        ...s,
+        adm1_pcode: normalizeCode(s.adm1_pcode),
+        adm2_pcode: normalizeCode(s.adm2_pcode),
+        adm3_pcode: normalizeCode(s.adm3_pcode),
+      }));
 
       // boundaries
       setLoading(true, "Loading boundaries");
@@ -303,6 +316,10 @@
       // Pull any filter values from URL (but only after lookups exist).
       const urlFilters = readFiltersFromURL();
       state.filters = { ...state.filters, ...urlFilters };
+      ["gov", "district", "cadaster"].forEach(key => {
+        const v = state.filters[key];
+        state.filters[key] = (v === "all") ? "all" : normalizeCode(v);
+      });
 
       initUIOnce();
       applyFilters();
@@ -1260,7 +1277,7 @@
 
     const values = [];
     for (const f of fc.features || []){
-      const code = String(f.properties?.[codeProp] ?? "");
+      const code = normalizeCode(f.properties?.[codeProp]);
       const g = agg.get(code);
       if (!g) continue;
       const v = g.value;
@@ -1271,7 +1288,7 @@
 
     const layer = L.geoJSON(fc, {
       style: (feature) => {
-        const code = String(feature.properties?.[codeProp] ?? "");
+        const code = normalizeCode(feature.properties?.[codeProp]);
         const g = agg.get(code);
         if (!g){
           return {
@@ -1291,7 +1308,7 @@
         };
       },
       onEachFeature: (feature, lyr) => {
-        const code = String(feature.properties?.[codeProp] ?? "");
+        const code = normalizeCode(feature.properties?.[codeProp]);
         const name = String(feature.properties?.[nameProp] ?? code);
         const g = agg.get(code);
 

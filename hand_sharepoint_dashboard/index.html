@@ -183,8 +183,8 @@
           </div>
 
           <!-- Active filter summary -->
-          <div class="alert alert-light border-start border-4 border-primary py-2 px-3 mb-3 small d-flex align-items-center gap-2" id="filterSummaryBanner" style="background: linear-gradient(135deg, rgba(40, 104, 168, 0.06), rgba(26, 79, 140, 0.08));">
-            <i class="bi bi-funnel text-primary" style="font-size: 1.1rem;"></i>
+          <div class="alert alert-light border-start border-4 border-primary-subtle py-2 px-3 mb-3 small d-flex align-items-center gap-2 filter-banner" id="filterSummaryBanner">
+            <i class="bi bi-funnel text-primary"></i>
             <span id="filterSummaryText">Showing all records. Use the sidebar filters to refine.</span>
           </div>
 
@@ -507,17 +507,13 @@
                     <div class="small text-body-secondary">Search, sort, export. (This public view does not include personal contact details.)</div>
                   </div>
 
-                  <div class="dropdown">
+                  <div class="btn-group">
                     <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                       <i class="bi bi-download"></i> Export
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                      <li><button class="dropdown-item" id="downloadFilteredBtn" type="button">
-                        <i class="bi bi-download me-2"></i>Export filtered CSV
-                      </button></li>
-                      <li><button class="dropdown-item" id="downloadTableBtn" type="button">
-                        <i class="bi bi-table me-2"></i>Export table CSV
-                      </button></li>
+                      <li><button class="dropdown-item" id="downloadFilteredBtn" type="button"><i class="bi bi-filter"></i> Export filtered CSV</button></li>
+                      <li><button class="dropdown-item" id="downloadTableBtn" type="button"><i class="bi bi-table"></i> Export table CSV</button></li>
                     </ul>
                   </div>
                 </div>
