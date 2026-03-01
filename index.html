@@ -3,15 +3,134 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="refresh" content="0; url=hand_sharepoint_dashboard/" />
-  <title>HAND Mapping Platform</title>
+  <title>IAMP Dashboard</title>
+  <meta name="description" content="IAMP Dashboard – interactive snapshot and mapping tools." />
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;margin:2rem}
-    a{color:#0c61ad}
+    :root{
+      --brand-primary:#2868a8;
+      --brand-navy:#1a4f8c;
+      --brand-accent:#e8832a;
+      --bg0:#f6f8fb;
+      --bg1:#ffffff;
+      --border:rgba(15,23,42,.12);
+      --shadow:0 1px 2px rgba(15,23,42,.06),0 18px 42px rgba(15,23,42,.10);
+      --radius:16px;
+    }
+
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#f0f5fa 0%,#e8f0f8 100%);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;
+      color:#0f172a;
+    }
+
+    .wrap{max-width:1100px;margin:0 auto;padding:34px 18px 56px}
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .brand{display:flex;gap:14px;align-items:center}
+    .brand img{height:40px;width:auto}
+    .brand h1{font-size:18px;margin:0;font-weight:800;letter-spacing:.01em;color:var(--brand-navy)}
+    .brand p{margin:2px 0 0;font-size:13px;color:rgba(15,23,42,.65)}
+
+    .cta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .btn{
+      appearance:none;
+      border:1px solid transparent;
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:700;
+      font-size:14px;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+    }
+    .btn-primary{background:var(--brand-primary);color:#fff;box-shadow:0 8px 18px rgba(40,104,168,.22)}
+    .btn-primary:hover{filter:brightness(.98)}
+    .btn-ghost{background:rgba(255,255,255,.72);border-color:var(--border);color:var(--brand-navy)}
+    .btn-ghost:hover{background:#fff}
+
+    .hero{
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.92);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .hero h2{margin:0 0 8px;font-size:24px;letter-spacing:-.01em}
+    .hero .sub{color:rgba(15,23,42,.7);line-height:1.45;max-width:75ch}
+
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-top:14px}
+    .card{
+      grid-column:span 12;
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.90);
+      padding:14px;
+    }
+    @media (min-width:720px){
+      .card{grid-column:span 6}
+    }
+    @media (min-width:980px){
+      .card{grid-column:span 4}
+    }
+    .card h3{margin:0 0 8px;font-size:14px;color:var(--brand-navy)}
+    .card p{margin:0;color:rgba(15,23,42,.7);font-size:13px;line-height:1.45}
+
+    .foot{margin-top:18px;color:rgba(15,23,42,.6);font-size:12px}
+    .foot a{color:var(--brand-primary);text-decoration:none}
+    .foot a:hover{text-decoration:underline}
   </style>
 </head>
 <body>
-  <h1>HAND Mapping Platform</h1>
-  <p>If you are not redirected automatically, open <a href="hand_sharepoint_dashboard/">hand_sharepoint_dashboard/</a>.</p>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand" aria-label="IAMP Dashboard">
+        <img src="hand_sharepoint_dashboard/assets/img/hand.png" alt="HAND" />
+        <div>
+          <h1>IAMP Dashboard</h1>
+          <p>Interactive snapshot, map, and export tools.</p>
+        </div>
+      </div>
+      <div class="cta">
+        <a class="btn btn-primary" href="hand_sharepoint_dashboard/">Open dashboard</a>
+        <a class="btn btn-ghost" href="docs/frontend-overhaul-plan.md">Design plan</a>
+      </div>
+    </div>
+
+    <section class="hero">
+      <h2>Disseminate information fast, with a professional snapshot look</h2>
+      <div class="sub">
+        This dashboard is built to support quick briefings and deeper exploration: filter by admin levels,
+        inspect records, export CSVs, and explore interactive map layers.
+      </div>
+
+      <div class="grid" aria-label="Highlights">
+        <div class="card">
+          <h3>Snapshot KPIs</h3>
+          <p>See coverage, assessed status, active sites, QC flags, and missing coordinates at a glance.</p>
+        </div>
+        <div class="card">
+          <h3>Interactive map</h3>
+          <p>Markers and choropleths with click-to-filter for districts and cadasters.</p>
+        </div>
+        <div class="card">
+          <h3>Exports and share links</h3>
+          <p>Export filtered views and share a link that preserves your current filter state.</p>
+        </div>
+      </div>
+
+      <div class="foot">
+        Entry point: <a href="hand_sharepoint_dashboard/">/hand_sharepoint_dashboard/</a>
+      </div>
+    </section>
+  </div>
 </body>
 </html>

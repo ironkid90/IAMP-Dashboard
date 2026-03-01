@@ -40,6 +40,33 @@
     return String(code).trim();
   }
 
+  // Validation flags (preferred) + backward compatible QC flags (legacy)
+  function vAny(s){
+    return Boolean(s?.validation?.flags_any ?? s?.qc?.qc_any_issue ?? false);
+  }
+
+  function vCount(s){
+    return Number.isFinite(s?.validation?.flags_count)
+      ? s.validation.flags_count
+      : (Number.isFinite(s?.qc?.qc_issue_count) ? s.qc.qc_issue_count : 0);
+  }
+
+  function vMissingCoords(s){
+    return Boolean(s?.validation?.missing_coords ?? s?.qc?.missing_coords ?? false);
+  }
+
+  function vMissingSiteStatusAssessed(s){
+    return Boolean(s?.validation?.missing_site_status_when_assessed ?? s?.qc?.missing_site_status_when_assessed ?? false);
+  }
+
+  function vMissingTotalsActive(s){
+    return Boolean(s?.validation?.missing_totals_active ?? s?.qc?.missing_totals_active ?? false);
+  }
+
+  function vInactiveMissingDate(s){
+    return Boolean(s?.validation?.inactive_missing_date ?? s?.qc?.inactive_missing_date ?? false);
+  }
+
   function downloadText(filename, text){
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -214,7 +241,7 @@
 
     const total = c.records || state.raw.length;
     const withCoords = c.with_coords ?? null;
-    const qcAny = c.qc_any_issue ?? null;
+    const flaggedAny = c.flags_any ?? c.qc_any_issue ?? null;
 
     badge.textContent = `${fmtInt.format(total)} sites`;
 
@@ -231,7 +258,7 @@
     const parts = [];
     if (gen) parts.push(`Generated: ${gen} (UTC)`);
     if (withCoords !== null) parts.push(`With coordinates: ${fmtInt.format(withCoords)} (${fmtPct.format((withCoords/Math.max(1,total))*100)}%)`);
-    if (qcAny !== null) parts.push(`QC flagged: ${fmtInt.format(qcAny)} (${fmtPct.format((qcAny/Math.max(1,total))*100)}%)`);
+    if (flaggedAny !== null) parts.push(`Flagged (completeness): ${fmtInt.format(flaggedAny)} (${fmtPct.format((flaggedAny/Math.max(1,total))*100)}%)`);
 
     const sf = state.meta.source_files || {};
     const sources = [];
@@ -240,6 +267,18 @@
     if (sf.boundaries_zip) sources.push(`Boundaries: ${sf.boundaries_zip}`);
 
     $("dataMetaText").textContent = [...parts, ...(sources.length ? ["Sources: " + sources.join(" • ")] : [])].join("\n");
+
+    // About tab uses the same snapshot meta (kept lightweight)
+    const about = $("aboutDataMeta");
+    if (about) about.textContent = $("dataMetaText").textContent;
+
+    // Home meta line (compact)
+    const homeMeta = $("homeMetaLine");
+    if (homeMeta){
+      const genLabel = gen ? `Generated ${gen} (UTC)` : "Generated —";
+      homeMeta.textContent = genLabel;
+    }
+
     const hint = $("dataSourceHint");
     if (hint){
       hint.textContent = (state.meta._loaded_via === "bundle") ? "Bundled JSON" : "API: /api/data";
@@ -396,16 +435,16 @@
     const phoneVals = uniqueSorted(state.raw.map(s => s.phone_status || "Not assessed"));
     populateSelect($("phoneStatusFilter"), phoneVals, f.phoneStatus, { allLabel: "All phone statuses" });
 
-    // QC options
+    // Data completeness / validation options
     const qcSelect = $("qcFilter");
     qcSelect.innerHTML = "";
     const opts = [
       { v: "all", t: "All records" },
-      { v: "any", t: "QC: Any issue" },
-      { v: "missing_coords", t: "QC: Missing coordinates" },
-      { v: "missing_site_status", t: "QC: Missing site status (assessed)" },
-      { v: "missing_totals_active", t: "QC: Active sites missing totals" },
-      { v: "inactive_missing_date", t: "QC: Inactive/demolished missing date" },
+      { v: "any", t: "Flagged: Any completeness flag" },
+      { v: "missing_coords", t: "Flagged: Missing coordinates (map)" },
+      { v: "missing_site_status", t: "Flagged: Missing site status (assessed)" },
+      { v: "missing_totals_active", t: "Flagged: Active sites missing totals" },
+      { v: "inactive_missing_date", t: "Flagged: Inactive/demolished missing date" },
     ];
     for (const o of opts){
       const opt = document.createElement("option");
@@ -471,15 +510,15 @@
 
     if (f.qc !== "all"){
       if (f.qc === "any"){
-        arr = arr.filter(s => s.qc?.qc_any_issue);
+        arr = arr.filter(vAny);
       } else if (f.qc === "missing_coords"){
-        arr = arr.filter(s => s.qc?.missing_coords);
+        arr = arr.filter(vMissingCoords);
       } else if (f.qc === "missing_site_status"){
-        arr = arr.filter(s => s.qc?.missing_site_status_when_assessed);
+        arr = arr.filter(vMissingSiteStatusAssessed);
       } else if (f.qc === "missing_totals_active"){
-        arr = arr.filter(s => s.qc?.missing_totals_active);
+        arr = arr.filter(vMissingTotalsActive);
       } else if (f.qc === "inactive_missing_date"){
-        arr = arr.filter(s => s.qc?.inactive_missing_date);
+        arr = arr.filter(vInactiveMissingDate);
       }
     }
 
@@ -535,7 +574,7 @@
     const assessed = state.filtered.filter(computeAssessed).length;
     const activeSites = state.filtered.filter(computeActive);
 
-    const qcAny = state.filtered.filter(s => s.qc?.qc_any_issue).length;
+    const flaggedAny = state.filtered.filter(vAny).length;
 
     const hh = sumMetric(activeSites, s => s.metrics?.households_total ?? null);
     const ind = sumMetric(activeSites, s => s.metrics?.individuals_total ?? null);
@@ -551,8 +590,8 @@
     $("kpiActive").textContent = fmtInt.format(activeSites.length);
     $("kpiActiveSub").textContent = total ? `${fmtPct.format(activeSites.length * 100 / total)}% of filtered` : "—";
 
-    $("kpiQC").textContent = fmtInt.format(qcAny);
-    $("kpiQCSub").textContent = total ? `${fmtPct.format(qcAny * 100 / total)}% QC any-issue` : "—";
+    $("kpiQC").textContent = fmtInt.format(flaggedAny);
+    $("kpiQCSub").textContent = total ? `${fmtPct.format(flaggedAny * 100 / total)}% flagged` : "—";
 
     $("kpiHH").textContent = fmtInt.format(hh);
     $("kpiHHSub").textContent = `Sum across active sites`;
@@ -565,6 +604,31 @@
 
     $("kpiLat").textContent = fmtInt.format(lat);
     $("kpiLatSub").textContent = `Sum across active sites`;
+
+    // Home snapshot KPIs (optional nodes)
+    const set = (id, v) => {
+      const n = $(id);
+      if (n) n.textContent = v;
+    };
+    set("homeKpiTotal", fmtInt.format(total));
+    set("homeKpiTotalSub", (total === state.raw.length) ? "All records" : `Filtered from ${fmtInt.format(state.raw.length)}`);
+    set("homeKpiAssessed", fmtInt.format(assessed));
+    set("homeKpiAssessedSub", total ? `${fmtPct.format(assessed * 100 / total)}% of filtered` : "—");
+    set("homeKpiActive", fmtInt.format(activeSites.length));
+    set("homeKpiActiveSub", total ? `${fmtPct.format(activeSites.length * 100 / total)}% of filtered` : "—");
+    set("homeKpiQC", fmtInt.format(flaggedAny));
+    set("homeKpiQCSub", total ? `${fmtPct.format(flaggedAny * 100 / total)}% flagged` : "—");
+    set("homeKpiIND", fmtInt.format(ind));
+    set("homeKpiHH", fmtInt.format(hh));
+
+    // Sidebar count badge (filtered / total)
+    const b = $("filterCountBadge");
+    if (b){
+      const base = Math.max(0, state.raw.length);
+      b.textContent = base ? `${fmtInt.format(total)} / ${fmtInt.format(base)}` : fmtInt.format(total);
+      b.classList.remove("text-bg-light", "text-bg-primary");
+      b.classList.add((base && total !== base) ? "text-bg-primary" : "text-bg-light");
+    }
 
     // Update filter summary banner
     updateFilterSummary(total);
@@ -757,7 +821,7 @@
       }
     });
 
-    // QC by type
+    // Completeness flags by type
     const ctxQC = $("chartQC").getContext("2d");
     state.charts.qc = new Chart(ctxQC, {
       type: "bar",
@@ -841,7 +905,7 @@
     state.charts.topCad.$codes = top.map(([code]) => code);
     state.charts.topCad.update();
 
-    // QC by type
+    // Completeness flags by type
     const qcKeys = [
       { key: "missing_coords", label: "Missing coordinates" },
       { key: "missing_site_status", label: "Missing site status (assessed)" },
@@ -851,10 +915,10 @@
     const qcCounts = qcKeys.map(k => {
       let n = 0;
       for (const s of state.filtered){
-        if (k.key === "missing_coords" && s.qc?.missing_coords) n++;
-        if (k.key === "missing_site_status" && s.qc?.missing_site_status_when_assessed) n++;
-        if (k.key === "missing_totals_active" && s.qc?.missing_totals_active) n++;
-        if (k.key === "inactive_missing_date" && s.qc?.inactive_missing_date) n++;
+        if (k.key === "missing_coords" && vMissingCoords(s)) n++;
+        if (k.key === "missing_site_status" && vMissingSiteStatusAssessed(s)) n++;
+        if (k.key === "missing_totals_active" && vMissingTotalsActive(s)) n++;
+        if (k.key === "inactive_missing_date" && vInactiveMissingDate(s)) n++;
       }
       return n;
     });
@@ -880,22 +944,22 @@
       {
         id: "qc1",
         title: "Missing coordinates",
-        body: "These sites cannot be shown as point markers. Fix by ensuring each settlement PCode has a valid lat/lon (ideally from ArcGIS export) and regenerating the dashboard JSON."
+        body: "Blocking for map display. These sites cannot be shown as point markers. Fix by ensuring each settlement PCode has a valid lat/lon (ideally from ArcGIS export) and regenerating the dashboard JSON."
       },
       {
         id: "qc2",
         title: "Missing site status (assessed)",
-        body: "A phone assessment exists but site status is blank. Confirm the site status (Active / Inactive / Fully Demolished) and update the source sheet."
+        body: "Completeness flag. A phone assessment exists but site status is blank. Confirm the site status (Active / Inactive / Fully Demolished) and update the source sheet."
       },
       {
         id: "qc3",
         title: "Active sites missing totals",
-        body: "Active sites should typically have totals (individuals/households/structures). Check whether totals are missing or recorded in split fields only."
+        body: "Completeness flag. Active sites should typically have totals (individuals/households/structures). Check whether totals are missing or recorded in split fields only."
       },
       {
         id: "qc4",
         title: "Inactive/demolished missing date",
-        body: "If a site is marked Inactive or Fully Demolished, capture the relevant date (or at least month/year) to support timeline reporting."
+        body: "Informational completeness. If a site is marked Inactive or Fully Demolished, capture the relevant date (or at least month/year) to support timeline reporting."
       },
     ];
 
@@ -928,8 +992,8 @@
       { title: "Active IND", field: "ind", hozAlign: "right", width: 110 },
       { title: "Active HH", field: "hh", hozAlign: "right", width: 110 },
       { title: "Active Structures", field: "struct", hozAlign: "right", width: 140 },
-      { title: "QC Any", field: "qc_any", width: 80, hozAlign: "center" },
-      { title: "QC Count", field: "qc_count", width: 90, hozAlign: "right" },
+      { title: "Flagged", field: "qc_any", width: 90, hozAlign: "center" },
+      { title: "Flags", field: "qc_count", width: 80, hozAlign: "right" },
       { title: "Has coords", field: "has_coords", width: 110, hozAlign: "center" },
     ];
 
@@ -971,8 +1035,8 @@
       columns: [
         { title: "PCode", field: "pcode", width: 140 },
         { title: "Name", field: "name", minWidth: 180 },
-        { title: "QC Count", field: "qc_count", width: 90, hozAlign: "right" },
-        { title: "Issues", field: "qc_list", minWidth: 260 },
+        { title: "Flags", field: "qc_count", width: 80, hozAlign: "right" },
+        { title: "Details", field: "qc_list", minWidth: 260 },
       ]
     });
 
@@ -981,7 +1045,7 @@
     });
 
     $("downloadQCBtn").addEventListener("click", () => {
-      const qcRows = buildTableRows(state.filtered.filter(s => s.qc?.qc_any_issue));
+      const qcRows = buildTableRows(state.filtered.filter(vAny));
       const csv = toCSV(qcRows, tableCSVColumns());
       downloadText("hand_qc_records.csv", csv);
     });
@@ -1000,8 +1064,8 @@
         ind: active ? (s.metrics?.individuals_total ?? null) : null,
         hh: active ? (s.metrics?.households_total ?? null) : null,
         struct: active ? (s.metrics?.structures_total ?? null) : null,
-        qc_any: s.qc?.qc_any_issue ? "Yes" : "No",
-        qc_count: s.qc?.qc_issue_count ?? 0,
+        qc_any: vAny(s) ? "Yes" : "No",
+        qc_count: vCount(s),
         qc_list: qcIssueList(s),
         has_coords: (typeof s.lat === "number" && typeof s.lon === "number") ? "Yes" : "No",
       };
@@ -1010,10 +1074,10 @@
 
   function qcIssueList(s){
     const parts = [];
-    if (s.qc?.missing_coords) parts.push("Missing coords");
-    if (s.qc?.missing_site_status_when_assessed) parts.push("Missing site status");
-    if (s.qc?.missing_totals_active) parts.push("Missing totals (active)");
-    if (s.qc?.inactive_missing_date) parts.push("Missing inactive date");
+    if (vMissingCoords(s)) parts.push("Missing coords");
+    if (vMissingSiteStatusAssessed(s)) parts.push("Missing site status");
+    if (vMissingTotalsActive(s)) parts.push("Missing totals (active)");
+    if (vInactiveMissingDate(s)) parts.push("Missing inactive date");
     return parts.join("; ");
   }
 
@@ -1028,9 +1092,9 @@
       { title: "Active IND", get: r => r.ind ?? "" },
       { title: "Active HH", get: r => r.hh ?? "" },
       { title: "Active Structures", get: r => r.struct ?? "" },
-      { title: "QC Any", get: r => r.qc_any },
-      { title: "QC Count", get: r => r.qc_count },
-      { title: "QC Issues", get: r => r.qc_list },
+      { title: "Flagged", get: r => r.qc_any },
+      { title: "Flags", get: r => r.qc_count },
+      { title: "Flag details", get: r => r.qc_list },
       { title: "Has coords", get: r => r.has_coords },
     ];
   }
@@ -1179,7 +1243,7 @@
           <div style="font-size:12px"><b>Cadaster:</b> ${escapeHtml(cadaster)}</div>
           <div style="font-size:12px"><b>Site status:</b> ${escapeHtml(s.site_status || "Not recorded")}</div>
           <div style="font-size:12px"><b>Phone status:</b> ${escapeHtml(s.phone_status || "Not assessed")}</div>
-          <div style="font-size:12px"><b>QC any issue:</b> ${s.qc?.qc_any_issue ? "Yes" : "No"}</div>
+          <div style="font-size:12px"><b>Flagged:</b> ${vAny(s) ? "Yes" : "No"}</div>
         </div>
       `);
 
@@ -1202,7 +1266,7 @@
       return s.site_status || "Not recorded";
     }
     if (colorBy === "qc_any_issue"){
-      return s.qc?.qc_any_issue ? "QC issue" : "No issue";
+      return vAny(s) ? "Flagged" : "Not flagged";
     }
     if (colorBy === "phone_status"){
       return s.phone_status || "Not assessed";
@@ -1350,12 +1414,12 @@
       const code = String(s[keyField] ?? "");
       if (!code) continue;
 
-      if (!groups.has(code)) groups.set(code, { count: 0, assessed: 0, qcAny: 0, indActive: 0, hhActive: 0 });
+      if (!groups.has(code)) groups.set(code, { count: 0, assessed: 0, flaggedAny: 0, indActive: 0, hhActive: 0 });
       const g = groups.get(code);
 
       g.count += 1;
       if (computeAssessed(s)) g.assessed += 1;
-      if (s.qc?.qc_any_issue) g.qcAny += 1;
+      if (vAny(s)) g.flaggedAny += 1;
 
       if (computeActive(s)){
         const ind = s.metrics?.individuals_total;
@@ -1371,7 +1435,7 @@
       if (metric === "sites_count") value = g.count;
       if (metric === "individuals_active") value = g.indActive;
       if (metric === "households_active") value = g.hhActive;
-      if (metric === "qc_rate") value = g.count ? (g.qcAny * 100 / g.count) : 0;
+      if (metric === "qc_rate") value = g.count ? (g.flaggedAny * 100 / g.count) : 0;
       if (metric === "assessed_rate") value = g.count ? (g.assessed * 100 / g.count) : 0;
       out.set(code, { value, ...g });
     }
@@ -1385,7 +1449,7 @@
     sites_count: "Sites",
     individuals_active: "Individuals (active)",
     households_active: "Households (active)",
-    qc_rate: "QC any-issue %",
+    qc_rate: "Flagged % (completeness)",
     assessed_rate: "Assessed %",
   };
 
@@ -1573,12 +1637,33 @@ function escapeHtml(s){
     $("resetFiltersBtn").addEventListener("click", resetFilters);
     $("downloadFilteredBtn").addEventListener("click", exportFilteredCSV);
 
+    // Sidebar quick actions (optional nodes)
+    const sidebarShare = $("sidebarShareBtn");
+    if (sidebarShare) sidebarShare.addEventListener("click", copyShareLink);
+    const sidebarExport = $("sidebarExportBtn");
+    if (sidebarExport) sidebarExport.addEventListener("click", exportFilteredCSV);
+    const sidebarExportQC = $("sidebarExportQCBtn");
+    if (sidebarExportQC) sidebarExportQC.addEventListener("click", () => {
+      const qcRows = buildTableRows(state.filtered.filter(s => s.qc?.qc_any_issue));
+      const csv = toCSV(qcRows, tableCSVColumns());
+      downloadText("hand_qc_records.csv", csv);
+    });
+
     $("copyShareLinkBtn").addEventListener("click", copyShareLink);
 
     $("reloadDataBtn").addEventListener("click", () => {
       toast("Reloading data…");
       loadAllData();
     });
+
+    // About tab actions (optional nodes)
+    const aboutReload = $("aboutReloadBtn");
+    if (aboutReload) aboutReload.addEventListener("click", () => {
+      toast("Reloading data…");
+      loadAllData();
+    });
+    const aboutCopy = $("aboutCopyLinkBtn");
+    if (aboutCopy) aboutCopy.addEventListener("click", copyShareLink);
 
     $("scrollTopLink").addEventListener("click", (e) => {
       e.preventDefault();
