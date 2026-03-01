@@ -245,6 +245,13 @@
     const about = $("aboutDataMeta");
     if (about) about.textContent = $("dataMetaText").textContent;
 
+    // Home meta line (compact)
+    const homeMeta = $("homeMetaLine");
+    if (homeMeta){
+      const genLabel = gen ? `Generated ${gen} (UTC)` : "Generated —";
+      homeMeta.textContent = genLabel;
+    }
+
     const hint = $("dataSourceHint");
     if (hint){
       hint.textContent = (state.meta._loaded_via === "bundle") ? "Bundled JSON" : "API: /api/data";
@@ -587,9 +594,14 @@
     set("homeKpiIND", fmtInt.format(ind));
     set("homeKpiHH", fmtInt.format(hh));
 
-    // Sidebar count badge
+    // Sidebar count badge (filtered / total)
     const b = $("filterCountBadge");
-    if (b) b.textContent = fmtInt.format(total);
+    if (b){
+      const base = Math.max(0, state.raw.length);
+      b.textContent = base ? `${fmtInt.format(total)} / ${fmtInt.format(base)}` : fmtInt.format(total);
+      b.classList.remove("text-bg-light", "text-bg-primary");
+      b.classList.add((base && total !== base) ? "text-bg-primary" : "text-bg-light");
+    }
 
     // Update filter summary banner
     updateFilterSummary(total);
