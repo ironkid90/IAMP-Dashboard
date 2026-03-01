@@ -111,47 +111,92 @@
         <div class="p-3">
           <div class="d-flex align-items-center justify-content-between mb-2">
             <div class="fw-semibold"><i class="bi bi-funnel"></i> Filters</div>
-            <button class="btn btn-sm btn-outline-secondary" id="resetFiltersBtn" type="button">
-              Reset
-            </button>
+            <span class="badge text-bg-light border" id="filterCountBadge" title="Filtered count">—</span>
           </div>
 
-          <div class="mb-2">
+          <div class="mb-3">
             <label class="form-label small mb-1">Search (PCode / Name)</label>
             <input class="form-control" id="searchInput" placeholder="Type to filter…" />
           </div>
 
-          <div class="mb-2">
-            <label class="form-label small mb-1">Governorate</label>
-            <select class="form-select" id="govFilter"></select>
-          </div>
+          <div class="accordion" id="filterAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="filterHeadLocation">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#filterLocation" aria-expanded="true" aria-controls="filterLocation">
+                  <i class="bi bi-geo-alt me-2"></i> Location
+                </button>
+              </h2>
+              <div id="filterLocation" class="accordion-collapse collapse show" aria-labelledby="filterHeadLocation" data-bs-parent="#filterAccordion">
+                <div class="accordion-body">
+                  <div class="mb-2">
+                    <label class="form-label small mb-1">Governorate</label>
+                    <select class="form-select" id="govFilter"></select>
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label small mb-1">District</label>
+                    <select class="form-select" id="districtFilter"></select>
+                  </div>
+                  <div class="mb-0">
+                    <label class="form-label small mb-1">Cadaster</label>
+                    <select class="form-select" id="cadasterFilter"></select>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          <div class="mb-2">
-            <label class="form-label small mb-1">District</label>
-            <select class="form-select" id="districtFilter"></select>
-          </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="filterHeadOps">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#filterOps" aria-expanded="false" aria-controls="filterOps">
+                  <i class="bi bi-sliders me-2"></i> Operational status
+                </button>
+              </h2>
+              <div id="filterOps" class="accordion-collapse collapse" aria-labelledby="filterHeadOps" data-bs-parent="#filterAccordion">
+                <div class="accordion-body">
+                  <div class="mb-2">
+                    <label class="form-label small mb-1">Site Status</label>
+                    <select class="form-select" id="siteStatusFilter"></select>
+                  </div>
+                  <div class="mb-0">
+                    <label class="form-label small mb-1">Phone Call Status</label>
+                    <select class="form-select" id="phoneStatusFilter"></select>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          <div class="mb-2">
-            <label class="form-label small mb-1">Cadaster</label>
-            <select class="form-select" id="cadasterFilter"></select>
-          </div>
-
-          <div class="mb-2">
-            <label class="form-label small mb-1">Site Status</label>
-            <select class="form-select" id="siteStatusFilter"></select>
-          </div>
-
-          <div class="mb-2">
-            <label class="form-label small mb-1">Phone Call Status</label>
-            <select class="form-select" id="phoneStatusFilter"></select>
-          </div>
-
-          <div class="mb-2">
-            <label class="form-label small mb-1">QC</label>
-            <select class="form-select" id="qcFilter"></select>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="filterHeadQC">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#filterQC" aria-expanded="false" aria-controls="filterQC">
+                  <i class="bi bi-shield-check me-2"></i> Data quality
+                </button>
+              </h2>
+              <div id="filterQC" class="accordion-collapse collapse" aria-labelledby="filterHeadQC" data-bs-parent="#filterAccordion">
+                <div class="accordion-body">
+                  <div class="mb-0">
+                    <label class="form-label small mb-1">QC</label>
+                    <select class="form-select" id="qcFilter"></select>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <hr class="my-3">
+
+          <div class="d-grid gap-2">
+            <button class="btn btn-outline-secondary" id="resetFiltersBtn" type="button">
+              <i class="bi bi-arrow-counterclockwise"></i> Reset filters
+            </button>
+            <button class="btn btn-outline-primary" id="sidebarShareBtn" type="button">
+              <i class="bi bi-link-45deg"></i> Copy share link
+            </button>
+            <button class="btn btn-outline-primary" id="sidebarExportBtn" type="button">
+              <i class="bi bi-download"></i> Export filtered CSV
+            </button>
+            <button class="btn btn-outline-secondary" id="sidebarExportQCBtn" type="button">
+              <i class="bi bi-shield-exclamation"></i> Export QC-only CSV
+            </button>
+          </div>
 
           <div class="mt-3 small text-body-secondary">
             <div class="fw-semibold mb-1">Notes</div>
@@ -168,10 +213,10 @@
         <div class="p-3 p-lg-4">
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-3" style="border-bottom: 2px solid rgba(40, 104, 168, 0.12);">
             <div>
-              <h1 class="h4 mb-2" style="color: var(--brand-navy); font-weight: 700;">Lebanon Informal Settlements – Interactive Map</h1>
+              <h1 class="h4 mb-2" style="color: var(--brand-navy); font-weight: 700;">IAMP Dashboard – Lebanon Informal Settlements</h1>
               <div class="text-body-secondary">
-                <i class="bi bi-pin-map me-1"></i>
-                Explore site status, phone assessment progress, demographic indicators, and data-quality flags across Lebanon.
+                <i class="bi bi-clipboard-data me-1"></i>
+                Snapshot KPIs for briefings, plus interactive map, charts, and exports.
               </div>
             </div>
 
@@ -188,16 +233,16 @@
             <span id="filterSummaryText">Showing all records. Use the sidebar filters to refine.</span>
           </div>
 
-          <!-- Tabs -->
+          <!-- Primary navigation (tabs) -->
           <ul class="nav nav-tabs mb-3" id="mainTabs" role="tablist">
             <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="tab-map" data-bs-toggle="tab" data-bs-target="#pane-map" type="button" role="tab">
-                <i class="bi bi-geo-alt"></i> Map
+              <button class="nav-link active" id="tab-home" data-bs-toggle="tab" data-bs-target="#pane-home" type="button" role="tab">
+                <i class="bi bi-house"></i> Home
               </button>
             </li>
             <li class="nav-item" role="presentation">
-              <button class="nav-link" id="tab-overview" data-bs-toggle="tab" data-bs-target="#pane-overview" type="button" role="tab">
-                <i class="bi bi-speedometer2"></i> Insights
+              <button class="nav-link" id="tab-map" data-bs-toggle="tab" data-bs-target="#pane-map" type="button" role="tab">
+                <i class="bi bi-geo-alt"></i> Explore map
               </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -210,11 +255,70 @@
                 <i class="bi bi-table"></i> Records
               </button>
             </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-about" data-bs-toggle="tab" data-bs-target="#pane-about" type="button" role="tab">
+                <i class="bi bi-info-circle"></i> About
+              </button>
+            </li>
           </ul>
 
           <div class="tab-content" id="mainTabsContent">
-            <!-- Insights -->
-            <section class="tab-pane fade" id="pane-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
+            <!-- Home -->
+            <section class="tab-pane fade show active" id="pane-home" role="tabpanel" aria-labelledby="tab-home" tabindex="0">
+              <div class="row g-3 mb-3">
+                <div class="col-12">
+                  <div class="card">
+                    <div class="card-header">
+                      <div class="fw-semibold">Snapshot</div>
+                      <div class="small text-body-secondary">Key figures for briefings. Updates live with filters.</div>
+                    </div>
+                    <div class="card-body">
+                      <div class="home-kpi-grid">
+                        <div class="home-kpi">
+                          <div class="home-kpi-title">Total records</div>
+                          <div class="home-kpi-value" id="homeKpiTotal">—</div>
+                          <div class="home-kpi-sub" id="homeKpiTotalSub">—</div>
+                        </div>
+                        <div class="home-kpi">
+                          <div class="home-kpi-title">Assessed</div>
+                          <div class="home-kpi-value" id="homeKpiAssessed">—</div>
+                          <div class="home-kpi-sub" id="homeKpiAssessedSub">—</div>
+                        </div>
+                        <div class="home-kpi">
+                          <div class="home-kpi-title">Active sites</div>
+                          <div class="home-kpi-value" id="homeKpiActive">—</div>
+                          <div class="home-kpi-sub" id="homeKpiActiveSub">—</div>
+                        </div>
+                        <div class="home-kpi">
+                          <div class="home-kpi-title">QC issue records</div>
+                          <div class="home-kpi-value" id="homeKpiQC">—</div>
+                          <div class="home-kpi-sub" id="homeKpiQCSub">—</div>
+                        </div>
+                        <div class="home-kpi">
+                          <div class="home-kpi-title">Individuals (active)</div>
+                          <div class="home-kpi-value" id="homeKpiIND">—</div>
+                          <div class="home-kpi-sub">Sum across active sites</div>
+                        </div>
+                        <div class="home-kpi">
+                          <div class="home-kpi-title">Households (active)</div>
+                          <div class="home-kpi-value" id="homeKpiHH">—</div>
+                          <div class="home-kpi-sub">Sum across active sites</div>
+                        </div>
+                      </div>
+
+                      <div class="alert alert-light border mt-3 mb-0 small">
+                        <div class="fw-semibold mb-1">How to use</div>
+                        <ul class="mb-0 ps-3">
+                          <li>Use the left panel to filter and export.</li>
+                          <li>Open <b>Explore map</b> to click districts/cadasters and refine further.</li>
+                          <li>Use <b>Share</b> to copy a link that preserves your filters.</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="row g-3">
                 <div class="col-12 col-xl-6">
                   <div class="card chart-card h-100">
@@ -283,7 +387,7 @@
             </section>
 
             <!-- Map -->
-            <section class="tab-pane fade show active" id="pane-map" role="tabpanel" aria-labelledby="tab-map" tabindex="0">
+            <section class="tab-pane fade" id="pane-map" role="tabpanel" aria-labelledby="tab-map" tabindex="0">
               <div class="row g-3">
                 <div class="col-12">
                   <div class="card map-hero-card">
@@ -520,6 +624,56 @@
 
                 <div class="card-body">
                   <div id="recordsTable"></div>
+                </div>
+              </div>
+            </section>
+
+            <!-- About -->
+            <section class="tab-pane fade" id="pane-about" role="tabpanel" aria-labelledby="tab-about" tabindex="0">
+              <div class="row g-3">
+                <div class="col-12 col-xl-7">
+                  <div class="card">
+                    <div class="card-header">
+                      <div class="fw-semibold">About this dashboard</div>
+                      <div class="small text-body-secondary">Purpose, what is included, and key definitions.</div>
+                    </div>
+                    <div class="card-body">
+                      <p class="text-body-secondary mb-3">
+                        This dashboard is a public-facing mapping snapshot of informal settlements in Lebanon.
+                        It is designed for dissemination: quick KPIs, interactive map exploration, and exports.
+                      </p>
+
+                      <div class="fw-semibold mb-2">Definitions</div>
+                      <ul class="text-body-secondary mb-3 ps-3">
+                        <li><b>Assessed</b>: a record with a phone assessment status recorded.</li>
+                        <li><b>Active site</b>: site status equals <code>Active</code>.</li>
+                        <li><b>QC flags</b>: automatic indicators for missing or inconsistent fields that may need review.</li>
+                      </ul>
+
+                      <div class="fw-semibold mb-2">Disclaimers</div>
+                      <ul class="text-body-secondary mb-0 ps-3">
+                        <li>This public build excludes personal contact details.</li>
+                        <li>Boundaries and names are shown for reference and do not imply official endorsement.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-xl-5">
+                  <div class="card">
+                    <div class="card-header">
+                      <div class="fw-semibold">Data &amp; sources</div>
+                      <div class="small text-body-secondary">Loaded metadata from the current snapshot.</div>
+                    </div>
+                    <div class="card-body">
+                      <div class="small text-body-secondary" style="white-space:pre-line" id="aboutDataMeta">—</div>
+                      <hr class="my-3">
+                      <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" id="aboutReloadBtn" type="button"><i class="bi bi-arrow-clockwise"></i> Reload data</button>
+                        <button class="btn btn-outline-secondary" id="aboutCopyLinkBtn" type="button"><i class="bi bi-link-45deg"></i> Copy share link</button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>

@@ -240,6 +240,11 @@
     if (sf.boundaries_zip) sources.push(`Boundaries: ${sf.boundaries_zip}`);
 
     $("dataMetaText").textContent = [...parts, ...(sources.length ? ["Sources: " + sources.join(" • ")] : [])].join("\n");
+
+    // About tab uses the same snapshot meta (kept lightweight)
+    const about = $("aboutDataMeta");
+    if (about) about.textContent = $("dataMetaText").textContent;
+
     const hint = $("dataSourceHint");
     if (hint){
       hint.textContent = (state.meta._loaded_via === "bundle") ? "Bundled JSON" : "API: /api/data";
@@ -565,6 +570,26 @@
 
     $("kpiLat").textContent = fmtInt.format(lat);
     $("kpiLatSub").textContent = `Sum across active sites`;
+
+    // Home snapshot KPIs (optional nodes)
+    const set = (id, v) => {
+      const n = $(id);
+      if (n) n.textContent = v;
+    };
+    set("homeKpiTotal", fmtInt.format(total));
+    set("homeKpiTotalSub", (total === state.raw.length) ? "All records" : `Filtered from ${fmtInt.format(state.raw.length)}`);
+    set("homeKpiAssessed", fmtInt.format(assessed));
+    set("homeKpiAssessedSub", total ? `${fmtPct.format(assessed * 100 / total)}% of filtered` : "—");
+    set("homeKpiActive", fmtInt.format(activeSites.length));
+    set("homeKpiActiveSub", total ? `${fmtPct.format(activeSites.length * 100 / total)}% of filtered` : "—");
+    set("homeKpiQC", fmtInt.format(qcAny));
+    set("homeKpiQCSub", total ? `${fmtPct.format(qcAny * 100 / total)}% QC any-issue` : "—");
+    set("homeKpiIND", fmtInt.format(ind));
+    set("homeKpiHH", fmtInt.format(hh));
+
+    // Sidebar count badge
+    const b = $("filterCountBadge");
+    if (b) b.textContent = fmtInt.format(total);
 
     // Update filter summary banner
     updateFilterSummary(total);
@@ -1573,12 +1598,33 @@ function escapeHtml(s){
     $("resetFiltersBtn").addEventListener("click", resetFilters);
     $("downloadFilteredBtn").addEventListener("click", exportFilteredCSV);
 
+    // Sidebar quick actions (optional nodes)
+    const sidebarShare = $("sidebarShareBtn");
+    if (sidebarShare) sidebarShare.addEventListener("click", copyShareLink);
+    const sidebarExport = $("sidebarExportBtn");
+    if (sidebarExport) sidebarExport.addEventListener("click", exportFilteredCSV);
+    const sidebarExportQC = $("sidebarExportQCBtn");
+    if (sidebarExportQC) sidebarExportQC.addEventListener("click", () => {
+      const qcRows = buildTableRows(state.filtered.filter(s => s.qc?.qc_any_issue));
+      const csv = toCSV(qcRows, tableCSVColumns());
+      downloadText("hand_qc_records.csv", csv);
+    });
+
     $("copyShareLinkBtn").addEventListener("click", copyShareLink);
 
     $("reloadDataBtn").addEventListener("click", () => {
       toast("Reloading data…");
       loadAllData();
     });
+
+    // About tab actions (optional nodes)
+    const aboutReload = $("aboutReloadBtn");
+    if (aboutReload) aboutReload.addEventListener("click", () => {
+      toast("Reloading data…");
+      loadAllData();
+    });
+    const aboutCopy = $("aboutCopyLinkBtn");
+    if (aboutCopy) aboutCopy.addEventListener("click", copyShareLink);
 
     $("scrollTopLink").addEventListener("click", (e) => {
       e.preventDefault();
