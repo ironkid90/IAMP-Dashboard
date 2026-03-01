@@ -684,6 +684,11 @@
           bodyColor: dark ? "#e5e7eb" : "#0f172a",
         }
       },
+      elements: {
+        line: { tension: 0.32, borderWidth: 2 },
+        point: { radius: 2.5, hoverRadius: 5 },
+        bar: { borderRadius: 8 },
+      },
       scales: {
         x: {
           ticks: { color: tick, font: { size: 11 } },
@@ -736,6 +741,35 @@
           legend: { display: true, position: "bottom", labels: { boxWidth: 12, color: chartDefaults().scales.x.ticks.color } }
         },
         onClick: () => { /* no-op */ }
+      }
+    });
+
+    // Assessment trend (line) – last 90 days
+    const ctxAT = $("chartAssessTrend").getContext("2d");
+    state.charts.assessTrend = new Chart(ctxAT, {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "Assessed",
+            data: [],
+            borderColor: BRAND.primary,
+            backgroundColor: "rgba(40,104,168,0.18)",
+            fill: true,
+          },
+        ],
+      },
+      options: {
+        ...chartDefaults(),
+        scales: {
+          x: { ...chartDefaults().scales.x, grid: { display: false } },
+          y: { ...chartDefaults().scales.y, ticks: { ...chartDefaults().scales.y.ticks, callback: (v) => fmtInt.format(v) } },
+        },
+        plugins: {
+          ...chartDefaults().plugins,
+          legend: { display: true, position: "bottom", labels: { boxWidth: 12, color: chartDefaults().scales.x.ticks.color } }
+        },
       }
     });
 
@@ -853,6 +887,9 @@
     state.charts.assessment.data.datasets[1].data = [notAssessed];
     state.charts.assessment.update();
 
+    // Assessment trend – last 90 days
+    updateAssessmentTrend();
+
     // Site status counts
     const statusCounts = new Map();
     for (const s of state.filtered){
@@ -933,6 +970,70 @@
     // Use keys as values for filter select
     state.charts.qc.$keys = qcCombined.map(x => x.key);
     state.charts.qc.update();
+  }
+
+  function parseISODateLoose(s){
+    if (!s) return null;
+    // Expect YYYY-MM-DD or ISO; take first 10 chars when present.
+    const t = String(s).trim().slice(0, 10);
+    const m = /^\d{4}-\d{2}-\d{2}$/.exec(t);
+    if (!m) return null;
+    const d = new Date(t + "T00:00:00Z");
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function dateKeyUTC(d){
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth()+1).padStart(2, "0");
+    const da = String(d.getUTCDate()).padStart(2, "0");
+    return `${y}-${m}-${da}`;
+  }
+
+  function updateAssessmentTrend(){
+    if (!state.charts.assessTrend) return;
+
+    // Build daily counts from assessed_date (only where it parses)
+    const counts = new Map(); // YYYY-MM-DD -> n
+    let parsed = 0;
+    for (const s of state.filtered){
+      if (!computeAssessed(s)) continue;
+      const d = parseISODateLoose(s.assessed_date);
+      if (!d) continue;
+      parsed++;
+      const k = dateKeyUTC(d);
+      counts.set(k, (counts.get(k) || 0) + 1);
+    }
+
+    const note = $("assessTrendNote");
+    if (!parsed){
+      state.charts.assessTrend.data.labels = [];
+      state.charts.assessTrend.data.datasets[0].data = [];
+      state.charts.assessTrend.update();
+      if (note) note.textContent = "No usable assessment dates in the current filter.";
+      return;
+    }
+
+    // Determine range: last 90 days ending today (UTC)
+    const end = new Date();
+    const endUTC = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    const days = 90;
+    const labels = [];
+    const series = [];
+
+    let run = 0;
+    for (let i = days-1; i >= 0; i--){
+      const d = new Date(endUTC.getTime() - i * 24*60*60*1000);
+      const k = dateKeyUTC(d);
+      run += (counts.get(k) || 0);
+      // Short label (MM-DD)
+      labels.push(k.slice(5));
+      series.push(run);
+    }
+
+    state.charts.assessTrend.data.labels = labels;
+    state.charts.assessTrend.data.datasets[0].data = series;
+    state.charts.assessTrend.update();
+    if (note) note.textContent = `Cumulative assessed over last ${days} days (based on assessed_date where available).`;
   }
 
   // ---------- QC accordion ----------
@@ -1143,10 +1244,10 @@
     state.map.cluster.addTo(map);
 
     // Fit initial bounds
-    fitToLebanon();
+    fitToLebanon({ zoomIn: true });
 
     // Buttons
-    $("fitLebanonBtn").addEventListener("click", () => fitToLebanon());
+    $("fitLebanonBtn").addEventListener("click", () => fitToLebanon({ zoomIn: true }));
     $("clearMapBtn").addEventListener("click", () => clearMapSelection());
 
     $("toggleCluster").addEventListener("change", () => {
@@ -1178,12 +1279,17 @@
     });
   }
 
-  function fitToLebanon(){
+  function fitToLebanon({ zoomIn = false } = {}){
     const map = state.map.map;
     if (!map || !state.boundaries.adm1) return;
     const layer = L.geoJSON(state.boundaries.adm1);
     const b = layer.getBounds();
     if (b.isValid()) map.fitBounds(b.pad(0.03));
+    // A slightly closer default view helps cadaster legibility.
+    if (zoomIn){
+      const z = map.getZoom();
+      map.setZoom(z + 0.8);
+    }
   }
 
   function clearMapSelection(){
@@ -1396,6 +1502,22 @@
             $("cadasterFilter").value = code;
           }
           applyFilters();
+        });
+
+        // Hover highlight for better boundary legibility
+        lyr.on("mouseover", () => {
+          lyr.setStyle({ weight: 2, color: "rgba(255,255,255,0.95)" });
+        });
+        lyr.on("mouseout", () => {
+          // Reset by re-applying choropleth style via setStyle with computed style
+          const code = normalizeCode(feature.properties?.[codeProp]);
+          const g = agg.get(code);
+          if (!g){
+            lyr.setStyle({ weight: 1, color: "rgba(255,255,255,0.85)", fillColor: scale.noDataColor, fillOpacity: 0.75 });
+          } else {
+            const fill = scale.color(g.value);
+            lyr.setStyle({ weight: 1, color: "rgba(255,255,255,0.85)", fillColor: fill, fillOpacity: 0.85 });
+          }
         });
       }
     });
