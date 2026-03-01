@@ -239,13 +239,13 @@
           <!-- Primary navigation (tabs) -->
           <ul class="nav nav-tabs mb-3" id="mainTabs" role="tablist">
             <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="tab-home" data-bs-toggle="tab" data-bs-target="#pane-home" type="button" role="tab">
-                <i class="bi bi-house"></i> Home
+              <button class="nav-link active" id="tab-map" data-bs-toggle="tab" data-bs-target="#pane-map" type="button" role="tab">
+                <i class="bi bi-geo-alt"></i> Map
               </button>
             </li>
             <li class="nav-item" role="presentation">
-              <button class="nav-link" id="tab-map" data-bs-toggle="tab" data-bs-target="#pane-map" type="button" role="tab">
-                <i class="bi bi-geo-alt"></i> Explore map
+              <button class="nav-link" id="tab-home" data-bs-toggle="tab" data-bs-target="#pane-home" type="button" role="tab">
+                <i class="bi bi-clipboard-data"></i> Snapshot
               </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -267,7 +267,7 @@
 
           <div class="tab-content" id="mainTabsContent">
             <!-- Home -->
-            <section class="tab-pane fade show active" id="pane-home" role="tabpanel" aria-labelledby="tab-home" tabindex="0">
+            <section class="tab-pane fade" id="pane-home" role="tabpanel" aria-labelledby="tab-home" tabindex="0">
               <div class="row g-3 mb-3">
                 <div class="col-12">
                   <div class="card">
@@ -344,6 +344,19 @@
                 <div class="col-12 col-xl-6">
                   <div class="card chart-card h-100">
                     <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold">Assessment trend (last 90 days)</div>
+                      <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartAssessTrend"><i class="bi bi-image"></i></button>
+                    </div>
+                    <div class="card-body">
+                      <div class="chart-wrap"><canvas id="chartAssessTrend"></canvas></div>
+                      <div class="small text-body-secondary mt-2" id="assessTrendNote">—</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-xl-6">
+                  <div class="card chart-card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
                       <div class="fw-semibold">Site status mix</div>
                       <button class="btn btn-sm btn-outline-secondary" data-download-chart="chartSiteStatus"><i class="bi bi-image"></i></button>
                     </div>
@@ -395,7 +408,7 @@
             </section>
 
             <!-- Map -->
-            <section class="tab-pane fade" id="pane-map" role="tabpanel" aria-labelledby="tab-map" tabindex="0">
+            <section class="tab-pane fade show active" id="pane-map" role="tabpanel" aria-labelledby="tab-map" tabindex="0">
               <div class="row g-3">
                 <div class="col-12">
                   <div class="card map-hero-card">
@@ -512,8 +525,8 @@
 
                               <label class="form-label small mb-1">Level</label>
                               <select class="form-select form-select-sm mb-2" id="choroplethLevel">
-                                <option value="adm2">District</option>
                                 <option value="adm3">Cadaster</option>
+                                <option value="adm2">District</option>
                               </select>
 
                               <label class="form-label small mb-1">Metric</label>
