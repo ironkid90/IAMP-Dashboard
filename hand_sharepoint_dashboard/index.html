@@ -166,24 +166,25 @@
       <!-- Main Content -->
       <main class="col-12 col-lg-9 col-xxl-10">
         <div class="p-3 p-lg-4">
-          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-3" style="border-bottom: 2px solid rgba(40, 104, 168, 0.12);">
             <div>
-              <h1 class="h5 mb-1">Lebanon Informal Settlements – Interactive Map</h1>
-              <div class="text-body-secondary small">
+              <h1 class="h4 mb-2" style="color: var(--brand-navy); font-weight: 700;">Lebanon Informal Settlements – Interactive Map</h1>
+              <div class="text-body-secondary">
+                <i class="bi bi-pin-map me-1"></i>
                 Explore site status, phone assessment progress, demographic indicators, and data-quality flags across Lebanon.
               </div>
             </div>
 
             <div class="d-flex align-items-center gap-2">
-              <button class="btn btn-outline-secondary btn-sm" id="copyShareLinkBtn" type="button" title="Copy a shareable link with current filters">
-                <i class="bi bi-link-45deg"></i> Share link
+              <button class="btn btn-outline-primary btn-sm" id="copyShareLinkBtn" type="button" title="Copy a shareable link with current filters">
+                <i class="bi bi-link-45deg"></i> Share
               </button>
             </div>
           </div>
 
           <!-- Active filter summary -->
-          <div class="alert alert-light border-start border-4 border-primary-subtle py-2 px-3 mb-3 small d-flex align-items-center gap-2" id="filterSummaryBanner">
-            <i class="bi bi-funnel text-primary"></i>
+          <div class="alert alert-light border-start border-4 border-primary py-2 px-3 mb-3 small d-flex align-items-center gap-2" id="filterSummaryBanner" style="background: linear-gradient(135deg, rgba(40, 104, 168, 0.06), rgba(26, 79, 140, 0.08));">
+            <i class="bi bi-funnel text-primary" style="font-size: 1.1rem;"></i>
             <span id="filterSummaryText">Showing all records. Use the sidebar filters to refine.</span>
           </div>
 
@@ -506,13 +507,18 @@
                     <div class="small text-body-secondary">Search, sort, export. (This public view does not include personal contact details.)</div>
                   </div>
 
-                  <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-sm btn-outline-primary" id="downloadFilteredBtn" type="button">
-                      <i class="bi bi-download"></i> Export filtered CSV
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="bi bi-download"></i> Export
                     </button>
-                    <button class="btn btn-sm btn-outline-secondary" id="downloadTableBtn" type="button">
-                      <i class="bi bi-download"></i> Export table CSV
-                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      <li><button class="dropdown-item" id="downloadFilteredBtn" type="button">
+                        <i class="bi bi-download me-2"></i>Export filtered CSV
+                      </button></li>
+                      <li><button class="dropdown-item" id="downloadTableBtn" type="button">
+                        <i class="bi bi-table me-2"></i>Export table CSV
+                      </button></li>
+                    </ul>
                   </div>
                 </div>
 

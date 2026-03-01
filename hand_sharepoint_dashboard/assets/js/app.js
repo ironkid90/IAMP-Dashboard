@@ -348,18 +348,21 @@
   function refreshAdminDropdowns(){
     const f = state.filters;
 
+    // Use raw data for building cascading options based on current filter state
     const sitesForGov = state.raw;
     const govCodes = uniqueSorted(sitesForGov.map(s => s.adm1_pcode));
     populateSelect($("govFilter"), govCodes, f.gov, { allLabel: "All governorates", labelMap: state.lookups.adm1NameByCode });
 
-    const sitesForDistrict = (f.gov !== "all") ? state.raw.filter(s => s.adm1_pcode === f.gov) : state.raw;
+    // District options cascade from governorate selection
+    const sitesForDistrict = (f.gov !== "all") ? state.raw.filter(s => String(s.adm1_pcode) === String(f.gov)) : state.raw;
     const distCodes = uniqueSorted(sitesForDistrict.map(s => s.adm2_pcode));
     populateSelect($("districtFilter"), distCodes, f.district, { allLabel: "All districts", labelMap: state.lookups.adm2NameByCode });
 
+    // Cadaster options cascade from both governorate and district selections
     const sitesForCadaster = (() => {
       let x = state.raw;
-      if (f.gov !== "all") x = x.filter(s => s.adm1_pcode === f.gov);
-      if (f.district !== "all") x = x.filter(s => s.adm2_pcode === f.district);
+      if (f.gov !== "all") x = x.filter(s => String(s.adm1_pcode) === String(f.gov));
+      if (f.district !== "all") x = x.filter(s => String(s.adm2_pcode) === String(f.district));
       return x;
     })();
     const cadCodes = uniqueSorted(sitesForCadaster.map(s => s.adm3_pcode));
