@@ -45,7 +45,7 @@ html, body{
 }
 
 body{
-  background: linear-gradient(180deg, #f0f5fa 0%, #e8f0f8 100%);
+  background: var(--app-bg-0);
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
@@ -54,8 +54,8 @@ code{
 }
 
 .app-navbar{
-  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.90));
-  border-bottom: 1px solid rgba(40, 104, 168, 0.22);
+  background: var(--brand-navy);
+  border-bottom: 3px solid rgba(232,131,42,0.85);
   box-shadow: var(--app-shadow-sm);
 }
 
@@ -64,22 +64,23 @@ code{
   color: var(--brand-navy);
 }
 
-.app-navbar .brand-title{ color: var(--brand-navy); }
-.app-navbar .brand-subtitle{ color: var(--brand-primary); }
+.app-navbar .brand-title{ color: #fff; }
+.app-navbar .brand-subtitle{ color: rgba(255,255,255,0.80); }
+.app-navbar .small.text-body-secondary{ color: rgba(255,255,255,0.80) !important; }
 
 .app-navbar .badge{
-  background: rgba(40,104,168,0.12) !important;
-  color: var(--brand-navy) !important;
-  border-color: rgba(40,104,168,0.28) !important;
+  background: rgba(255,255,255,0.14) !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.22) !important;
 }
 
 .app-navbar .btn-light{
-  background: rgba(232,131,42,0.12);
-  border-color: rgba(232,131,42,0.35);
-  color: var(--brand-navy);
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.22);
+  color: #fff;
 }
 .app-navbar .btn-light:hover{
-  background: rgba(232,131,42,0.18);
+  background: rgba(255,255,255,0.20);
 }
 
 .brand-logo{
@@ -359,12 +360,12 @@ code{
 
 .map-overlay-card{
   pointer-events: auto;
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(15,23,42,0.14);
+  background: rgba(255,255,255,0.98);
+  border: 1px solid rgba(15,23,42,0.12);
   border-radius: var(--app-radius);
   box-shadow: var(--app-shadow);
   padding: 12px;
-  backdrop-filter: blur(10px);
+  backdrop-filter: none;
   max-height: calc(min(72vh, 760px) - 24px);
   overflow: auto;
 }
@@ -440,12 +441,12 @@ code{
   }
   .map-overlay-card{
   pointer-events: auto;
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(15,23,42,0.14);
+  background: rgba(255,255,255,0.98);
+  border: 1px solid rgba(15,23,42,0.12);
   border-radius: var(--app-radius);
   box-shadow: var(--app-shadow);
   padding: 12px;
-  backdrop-filter: blur(10px);
+  backdrop-filter: none;
   max-height: calc(min(72vh, 760px) - 24px);
   overflow: auto;
 }

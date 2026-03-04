@@ -268,9 +268,7 @@
 
     $("dataMetaText").textContent = [...parts, ...(sources.length ? ["Sources: " + sources.join(" • ")] : [])].join("\n");
 
-    // About tab uses the same snapshot meta (kept lightweight)
-    const about = $("aboutDataMeta");
-    if (about) about.textContent = $("dataMetaText").textContent;
+    // About tab removed (public build): keep all notes in the Data offcanvas.
 
     // Home meta line (compact)
     const homeMeta = $("homeMetaLine");
@@ -665,11 +663,10 @@
 
   // ---------- charts ----------
   function chartDefaults(){
-    const dark = document.documentElement.getAttribute("data-bs-theme") === "dark";
-    const tick = dark ? "#cbd5e1" : "#475569";
-    const grid = dark ? "rgba(148,163,184,0.16)" : "rgba(15,23,42,0.08)";
-    const tooltipBg = dark ? "rgba(15,23,42,0.95)" : "rgba(255,255,255,0.98)";
-    const tooltipBorder = dark ? "rgba(148,163,184,0.25)" : "rgba(15,23,42,0.12)";
+    const tick = "#475569";
+    const grid = "rgba(15,23,42,0.08)";
+    const tooltipBg = "rgba(255,255,255,0.98)";
+    const tooltipBorder = "rgba(15,23,42,0.12)";
 
     return {
       responsive: true,
@@ -680,8 +677,8 @@
           backgroundColor: tooltipBg,
           borderColor: tooltipBorder,
           borderWidth: 1,
-          titleColor: dark ? "#e5e7eb" : "#0f172a",
-          bodyColor: dark ? "#e5e7eb" : "#0f172a",
+          titleColor: "#0f172a",
+          bodyColor: "#0f172a",
         }
       },
       elements: {
@@ -1778,14 +1775,7 @@ function escapeHtml(s){
       loadAllData();
     });
 
-    // About tab actions (optional nodes)
-    const aboutReload = $("aboutReloadBtn");
-    if (aboutReload) aboutReload.addEventListener("click", () => {
-      toast("Reloading data…");
-      loadAllData();
-    });
-    const aboutCopy = $("aboutCopyLinkBtn");
-    if (aboutCopy) aboutCopy.addEventListener("click", copyShareLink);
+    // About tab removed (public build)
 
     $("scrollTopLink").addEventListener("click", (e) => {
       e.preventDefault();
