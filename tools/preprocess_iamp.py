@@ -43,12 +43,17 @@ def normalize_header(name: str) -> str:
 
 
 def harmonize_columns(df: pd.DataFrame, canonical_cols):
-    norm_to_col = {normalize_header(c): c for c in df.columns}
     rename_map = {}
     for canonical in canonical_cols:
         if canonical in df.columns:
             continue
-        src = norm_to_col.get(normalize_header(canonical))
+        matches = [c for c in df.columns if normalize_header(c) == normalize_header(canonical)]
+        if len(matches) > 1:
+            raise ValueError(
+                f"Ambiguous columns for '{canonical}': {matches}. "
+                "Please keep one unique column name per field in the source file."
+            )
+        src = matches[0] if matches else None
         if src and src != canonical:
             rename_map[src] = canonical
     return df.rename(columns=rename_map) if rename_map else df
@@ -166,7 +171,7 @@ def main():
     ])
     if "PCode" not in df.columns:
         raise ValueError("Assessment CSV must include a PCode column (case/spacing-insensitive match supported).")
-    valid_pat = re.compile(r"^\\d{5}-\\d{2}-\\d{3}$")
+    valid_pat = re.compile(r"^\d{5}-\d{2}-\d{3}$")
     df = df[df["PCode"].astype(str).str.strip().apply(lambda x: bool(valid_pat.match(x)))].copy()
 
     # Numeric fields (coerce)
@@ -259,11 +264,11 @@ def main():
     # reporting (still being collected) and "blocking" issues for certain views (ex: map).
     lat = pd.to_numeric(df.get("Latitude"), errors="coerce")
     lon = pd.to_numeric(df.get("Longitude"), errors="coerce")
-    invalid_coords = (~lat.between(-90, 90)) | (~lon.between(-180, 180))
+    invalid_coords = lat.notna() & lon.notna() & ((lat < -90) | (lat > 90) | (lon < -180) | (lon > 180))
     df["flag_missing_coords"] = lat.isna() | lon.isna() | invalid_coords
     df["flag_missing_site_status"] = df["assessed"] & df["Site Status"].apply(is_blank)
     site_status_norm = df["Site Status"].astype(str).str.strip().str.lower()
-    active_mask = site_status_norm.str.startswith("active")
+    active_mask = site_status_norm == "active"
     core_totals = df[["Total number of Individuals", "Total number of Households", "Total number of Structures"]]
     structure_parts = df[[
         "A- Number of Tents",
