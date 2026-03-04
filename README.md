@@ -32,6 +32,7 @@ Next step: replace it with logic that fetches the latest XLSX + ArcGIS JSON, mer
 
 ### `/tools/preprocess_iamp.py`
 Offline preprocessing script to regenerate `sites.json` + trimmed boundaries.
+It tolerates assessment/master header formatting differences (case/spacing/punctuation) and ignores extra columns.
 
 ## Deploy (Vercel)
 
