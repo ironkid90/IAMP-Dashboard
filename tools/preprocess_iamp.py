@@ -38,6 +38,27 @@ from shapely.strtree import STRtree
 BLANK_TOKENS = {"", "-", "—", "–", "na", "n/a", "null", "none"}
 
 
+def normalize_header(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(name).strip().lower())
+
+
+def harmonize_columns(df: pd.DataFrame, canonical_cols):
+    rename_map = {}
+    for canonical in canonical_cols:
+        if canonical in df.columns:
+            continue
+        matches = [c for c in df.columns if normalize_header(c) == normalize_header(canonical)]
+        if len(matches) > 1:
+            raise ValueError(
+                f"Ambiguous columns for '{canonical}': {matches}. "
+                "Please keep one unique column name per field in the source file."
+            )
+        src = matches[0] if matches else None
+        if src and src != canonical:
+            rename_map[src] = canonical
+    return df.rename(columns=rename_map) if rename_map else df
+
+
 def is_blank(v) -> bool:
     if v is None:
         return True
@@ -136,7 +157,21 @@ def main():
 
     # 1) Read + clean assessment CSV
     df = pd.read_csv(args.assessment_csv)
-    valid_pat = re.compile(r"^\\d{5}-\\d{2}-\\d{3}$")
+    df = harmonize_columns(df, [
+        "PCode", "PCode Name", "Pcode_name", "Local Name", "Governorate", "District", "Cadaster",
+        "Site Status", "Phone call status", "Date of phone assessment",
+        "Date of when site is Inactive or full demolish sites",
+        "Record status", "Partner Name",
+        "A- Number of Tents",
+        "B- Number of Self-built Structures with Non-Concrete Roof",
+        "C- Number of Prefab Structure",
+        "D- Number of Self-built Structures with Concrete Roof",
+        "Total number of Structures", "Total number of Households", "Total number of Individuals",
+        "Number of Latrines",
+    ])
+    if "PCode" not in df.columns:
+        raise ValueError("Assessment CSV must include a PCode column (case/spacing-insensitive match supported).")
+    valid_pat = re.compile(r"^\d{5}-\d{2}-\d{3}$")
     df = df[df["PCode"].astype(str).str.strip().apply(lambda x: bool(valid_pat.match(x)))].copy()
 
     # Numeric fields (coerce)
@@ -170,7 +205,9 @@ def main():
     def prep_coords(dfx):
         if dfx.empty:
             return dfx
-        out = dfx.copy()
+        out = harmonize_columns(dfx.copy(), ["PCode", "Latitude", "Longitude"])
+        if "PCode" not in out.columns or "Latitude" not in out.columns or "Longitude" not in out.columns:
+            return pd.DataFrame(columns=["PCode", "Latitude", "Longitude"])
         out["PCode"] = out["PCode"].astype(str).str.strip()
         out["Latitude"] = pd.to_numeric(out.get("Latitude"), errors="coerce")
         out["Longitude"] = pd.to_numeric(out.get("Longitude"), errors="coerce")
@@ -225,9 +262,21 @@ def main():
     # 4) Data validation / completeness flags
     # IMPORTANT: these are not necessarily "errors". They mainly represent incomplete
     # reporting (still being collected) and "blocking" issues for certain views (ex: map).
-    df["flag_missing_coords"] = df["Latitude"].isna() | df["Longitude"].isna()
+    lat = pd.to_numeric(df.get("Latitude"), errors="coerce")
+    lon = pd.to_numeric(df.get("Longitude"), errors="coerce")
+    invalid_coords = lat.notna() & lon.notna() & ((lat < -90) | (lat > 90) | (lon < -180) | (lon > 180))
+    df["flag_missing_coords"] = lat.isna() | lon.isna() | invalid_coords
     df["flag_missing_site_status"] = df["assessed"] & df["Site Status"].apply(is_blank)
-    df["flag_missing_totals_active"] = (df["Site Status"].astype(str).str.strip() == "Active") & df[["Total number of Individuals","Total number of Households","Total number of Structures"]].isna().any(axis=1)
+    site_status_norm = df["Site Status"].astype(str).str.strip().str.lower()
+    active_mask = site_status_norm == "active"
+    core_totals = df[["Total number of Individuals", "Total number of Households", "Total number of Structures"]]
+    structure_parts = df[[
+        "A- Number of Tents",
+        "B- Number of Self-built Structures with Non-Concrete Roof",
+        "C- Number of Prefab Structure",
+        "D- Number of Self-built Structures with Concrete Roof",
+    ]]
+    df["flag_missing_totals_active"] = active_mask & core_totals.isna().all(axis=1) & structure_parts.isna().all(axis=1)
     df["flag_inactive_missing_date"] = df["Site Status"].astype(str).str.contains("Inactive|Demolished", case=False, na=False) & df["Date of when site is Inactive or full demolish sites"].apply(is_blank)
 
     flag_cols = ["flag_missing_coords","flag_missing_site_status","flag_missing_totals_active","flag_inactive_missing_date"]
