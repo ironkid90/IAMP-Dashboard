@@ -216,7 +216,7 @@
         <div class="p-3 p-lg-4">
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-3" style="border-bottom: 2px solid rgba(40, 104, 168, 0.12);">
             <div>
-              <h1 class="h4 mb-2" style="color: var(--brand-navy); font-weight: 700;">IAMP Dashboard – Lebanon Informal Settlements</h1>
+              <h1 class="h4 mb-2" style="color: var(--brand-navy); font-weight: 700;">HAND Mapping Platform – Informal Settlements (Lebanon)</h1>
               <div class="text-body-secondary">
                 <i class="bi bi-clipboard-data me-1"></i>
                 Snapshot KPIs for briefings, plus interactive map, charts, and exports.
@@ -258,11 +258,7 @@
                 <i class="bi bi-table"></i> Records
               </button>
             </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="tab-about" data-bs-toggle="tab" data-bs-target="#pane-about" type="button" role="tab">
-                <i class="bi bi-info-circle"></i> About
-              </button>
-            </li>
+
           </ul>
 
           <div class="tab-content" id="mainTabsContent">
@@ -509,7 +505,7 @@
                               <label class="form-label small mb-1">Markers: color by</label>
                                 <select class="form-select form-select-sm" id="mapColorBy">
                                   <option value="single">All sites</option>
-                                  <option value="site_status">Site Status</option>
+                                  <option value="site_status" selected>Site Status</option>
                                   <option value="qc_any_issue">Completeness flags</option>
                                   <option value="phone_status">Phone call status</option>
                                 </select>
@@ -526,7 +522,7 @@
                               <label class="form-label small mb-1">Level</label>
                               <select class="form-select form-select-sm mb-2" id="choroplethLevel">
                                 <option value="adm3">Cadaster</option>
-                                <option value="adm2">District</option>
+                                <option value="adm2" selected>District</option>
                               </select>
 
                               <label class="form-label small mb-1">Metric</label>
@@ -645,56 +641,6 @@
 
                 <div class="card-body">
                   <div id="recordsTable"></div>
-                </div>
-              </div>
-            </section>
-
-            <!-- About -->
-            <section class="tab-pane fade" id="pane-about" role="tabpanel" aria-labelledby="tab-about" tabindex="0">
-              <div class="row g-3">
-                <div class="col-12 col-xl-7">
-                  <div class="card">
-                    <div class="card-header">
-                      <div class="fw-semibold">About this dashboard</div>
-                      <div class="small text-body-secondary">Purpose, what is included, and key definitions.</div>
-                    </div>
-                    <div class="card-body">
-                      <p class="text-body-secondary mb-3">
-                        This dashboard is a public-facing mapping snapshot of informal settlements in Lebanon.
-                        It is designed for dissemination: quick KPIs, interactive map exploration, and exports.
-                      </p>
-
-                      <div class="fw-semibold mb-2">Definitions</div>
-                      <ul class="text-body-secondary mb-3 ps-3">
-                        <li><b>Assessed</b>: a record with a phone assessment status recorded.</li>
-                        <li><b>Active site</b>: site status equals <code>Active</code>.</li>
-                        <li><b>QC flags</b>: automatic indicators for missing or inconsistent fields that may need review.</li>
-                      </ul>
-
-                      <div class="fw-semibold mb-2">Disclaimers</div>
-                      <ul class="text-body-secondary mb-0 ps-3">
-                        <li>This public build excludes personal contact details.</li>
-                        <li>Boundaries and names are shown for reference and do not imply official endorsement.</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-12 col-xl-5">
-                  <div class="card">
-                    <div class="card-header">
-                      <div class="fw-semibold">Data &amp; sources</div>
-                      <div class="small text-body-secondary">Loaded metadata from the current snapshot.</div>
-                    </div>
-                    <div class="card-body">
-                      <div class="small text-body-secondary" style="white-space:pre-line" id="aboutDataMeta">—</div>
-                      <hr class="my-3">
-                      <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary" id="aboutReloadBtn" type="button"><i class="bi bi-arrow-clockwise"></i> Reload data</button>
-                        <button class="btn btn-outline-secondary" id="aboutCopyLinkBtn" type="button"><i class="bi bi-link-45deg"></i> Copy share link</button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </section>
