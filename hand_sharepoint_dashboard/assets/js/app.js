@@ -671,6 +671,7 @@
     return {
       responsive: true,
       maintainAspectRatio: false,
+      devicePixelRatio: 2,
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -1219,7 +1220,13 @@
     const mapEl = $("lebanonMap");
     if (!mapEl) return;
 
-    const map = L.map(mapEl, { preferCanvas: true, zoomSnap: 0.5, zoomControl: false });
+    const map = L.map(mapEl, {
+      preferCanvas: true,
+      zoomSnap: 1,
+      zoomDelta: 1,
+      wheelPxPerZoomLevel: 120,
+      zoomControl: false
+    });
     state.map.map = map;
 
     // Keep top corners clean for overlay cards.
@@ -1230,6 +1237,7 @@
     state.map.base = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
       subdomains: "abcd",
       maxZoom: 20,
+      detectRetina: true,
       attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
     }).addTo(map);
 
@@ -1241,10 +1249,10 @@
     state.map.cluster.addTo(map);
 
     // Fit initial bounds
-    fitToLebanon({ zoomIn: true });
+    fitToLebanon();
 
     // Buttons
-    $("fitLebanonBtn").addEventListener("click", () => fitToLebanon({ zoomIn: true }));
+    $("fitLebanonBtn").addEventListener("click", () => fitToLebanon());
     $("clearMapBtn").addEventListener("click", () => clearMapSelection());
 
     $("toggleCluster").addEventListener("change", () => {
@@ -1276,17 +1284,12 @@
     });
   }
 
-  function fitToLebanon({ zoomIn = false } = {}){
+  function fitToLebanon(){
     const map = state.map.map;
     if (!map || !state.boundaries.adm1) return;
     const layer = L.geoJSON(state.boundaries.adm1);
     const b = layer.getBounds();
-    if (b.isValid()) map.fitBounds(b.pad(0.03));
-    // A slightly closer default view helps cadaster legibility.
-    if (zoomIn){
-      const z = map.getZoom();
-      map.setZoom(z + 0.8);
-    }
+    if (b.isValid()) map.fitBounds(b.pad(0.05), { animate: true, duration: 0.4 });
   }
 
   function clearMapSelection(){
