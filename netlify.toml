@@ -4,12 +4,11 @@
 [build]
   publish = "."
 
-# Redirect root to the dashboard (immediate, transparent)
+# Redirect root to the dashboard
 [[redirects]]
   from = "/"
   to = "/hand_sharepoint_dashboard/"
-  status = 200
-  force = true
+  status = 302
 
 # Cache static assets aggressively (JS, CSS, images)
 [[headers]]
