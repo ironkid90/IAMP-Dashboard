@@ -99,6 +99,23 @@
     overlay.classList.toggle("d-none", !on);
   }
 
+  function setLoadingProgress(pct, activeStep){
+    const fill = $("loadingProgressFill");
+    if (fill) fill.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+
+    const steps = document.querySelectorAll("#loadingSteps .loading-step");
+    const order = ["sites", "boundaries", "ui"];
+    const activeIdx = order.indexOf(activeStep);
+
+    steps.forEach(el => {
+      const step = el.getAttribute("data-step");
+      const idx = order.indexOf(step);
+      el.classList.remove("active", "done");
+      if (idx < activeIdx) el.classList.add("done");
+      else if (idx === activeIdx) el.classList.add("active");
+    });
+  }
+
   function setHealth({ lastLoad, lastSuccess, errorCount, message }){
     $("healthLastLoad").textContent = lastLoad ?? "—";
     $("healthLastSuccess").textContent = lastSuccess ?? "—";
@@ -311,7 +328,8 @@
   }
 
   async function loadAllData(){
-    setLoading(true, "Fetching JSON");
+    setLoading(true, "Fetching sites data…");
+    setLoadingProgress(5, "sites");
     setHealth({ lastLoad: nowLocalString(), lastSuccess: null, errorCount: 0, message: "Loading…" });
 
     try{
@@ -333,8 +351,10 @@
         adm3_pcode: normalizeCode(s.adm3_pcode),
       }));
 
-      // boundaries
-      setLoading(true, "Loading boundaries");
+      setLoadingProgress(35, "boundaries");
+
+      // boundaries (original GeoJSON)
+      setLoading(true, "Loading boundaries…");
       const [adm1, adm2, adm3, adm3full] = await Promise.all([
         loadJSON("assets/data/boundaries_admin1.geojson"),
         loadJSON("assets/data/boundaries_admin2.geojson"),
@@ -342,6 +362,7 @@
         loadJSON("assets/data/boundaries_admin3_full.geojson"),
       ]);
 
+      setLoadingProgress(65, "boundaries");
       state.boundaries.adm1 = adm1;
       state.boundaries.adm2 = adm2;
       state.boundaries.adm3 = adm3;
@@ -349,6 +370,9 @@
 
       buildLookups();
       setDatasetBadge();
+
+      setLoadingProgress(80, "ui");
+      setLoading(true, "Building interface…");
 
       // Pull any filter values from URL (but only after lookups exist).
       const urlFilters = readFiltersFromURL();
@@ -361,6 +385,7 @@
       initUIOnce();
       applyFilters();
 
+      setLoadingProgress(100, "ui");
       setHealth({ lastLoad: nowLocalString(), lastSuccess: nowLocalString(), errorCount: 0, message: "Loaded ✓" });
       setLoading(false);
     }catch(err){
@@ -663,10 +688,12 @@
 
   // ---------- charts ----------
   function chartDefaults(){
-    const tick = "#475569";
-    const grid = "rgba(15,23,42,0.08)";
-    const tooltipBg = "rgba(255,255,255,0.98)";
-    const tooltipBorder = "rgba(15,23,42,0.12)";
+    const dark = isDark();
+    const tick = dark ? "#94a3b8" : "#475569";
+    const grid = dark ? "rgba(248,250,252,0.06)" : "rgba(15,23,42,0.08)";
+    const tooltipBg = dark ? "rgba(30,41,59,0.98)" : "rgba(255,255,255,0.98)";
+    const tooltipBorder = dark ? "rgba(248,250,252,0.12)" : "rgba(15,23,42,0.12)";
+    const textColor = dark ? "#f1f5f9" : "#0f172a";
 
     return {
       responsive: true,
@@ -678,8 +705,8 @@
           backgroundColor: tooltipBg,
           borderColor: tooltipBorder,
           borderWidth: 1,
-          titleColor: "#0f172a",
-          bodyColor: "#0f172a",
+          titleColor: textColor,
+          bodyColor: textColor,
         }
       },
       elements: {
@@ -1802,8 +1829,58 @@ function escapeHtml(s){
     });
   }
 
+  // ---------- dark mode ----------
+  function isDark(){
+    return document.documentElement.getAttribute("data-bs-theme") === "dark";
+  }
+
+  function applyTheme(dark){
+    document.documentElement.setAttribute("data-bs-theme", dark ? "dark" : "light");
+    const icon = $("darkModeIcon");
+    if (icon){
+      icon.className = dark ? "bi bi-sun" : "bi bi-moon-stars";
+    }
+
+    // Switch map tile layer
+    if (state.map.base && state.map.map){
+      state.map.map.removeLayer(state.map.base);
+      const url = dark
+        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+      state.map.base = L.tileLayer(url, {
+        subdomains: "abcd",
+        maxZoom: 20,
+        detectRetina: true,
+        attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+      }).addTo(state.map.map);
+      // Ensure base stays behind everything
+      state.map.base.bringToBack();
+    }
+
+    // Rebuild charts with new theme colors
+    if (uiInitialized) rebuildCharts();
+
+    // Persist preference
+    try { localStorage.setItem("hand-theme", dark ? "dark" : "light"); } catch {}
+  }
+
+  function initDarkMode(){
+    const btn = $("darkModeToggle");
+    if (!btn) return;
+
+    // Restore saved preference; default is always light
+    let saved = null;
+    try { saved = localStorage.getItem("hand-theme"); } catch {}
+    if (saved === "dark"){
+      applyTheme(true);
+    }
+
+    btn.addEventListener("click", () => applyTheme(!isDark()));
+  }
+
   // ---------- start ----------
   document.addEventListener("DOMContentLoaded", () => {
+    initDarkMode();
     loadAllData();
   });
 

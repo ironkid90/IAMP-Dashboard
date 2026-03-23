@@ -1,0 +1,58 @@
+# Netlify configuration for IAMP Dashboard
+# The site is a static build – no build command needed.
+
+[build]
+  publish = "."
+
+# Redirect root to the dashboard (immediate, transparent)
+[[redirects]]
+  from = "/"
+  to = "/hand_sharepoint_dashboard/"
+  status = 200
+  force = true
+
+# Cache static assets aggressively (JS, CSS, images)
+[[headers]]
+  for = "/hand_sharepoint_dashboard/assets/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/hand_sharepoint_dashboard/assets/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/hand_sharepoint_dashboard/assets/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# TopoJSON/JSON data – cache for 1 hour, allow revalidation
+[[headers]]
+  for = "/hand_sharepoint_dashboard/assets/data/*.topojson"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/hand_sharepoint_dashboard/assets/data/*.json"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+
+# HTML – short cache with revalidation
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=300, stale-while-revalidate=3600"
+
+[[headers]]
+  for = "/hand_sharepoint_dashboard/"
+  [headers.values]
+    Cache-Control = "public, max-age=300, stale-while-revalidate=3600"
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
