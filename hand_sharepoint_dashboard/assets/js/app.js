@@ -1106,6 +1106,8 @@
   }
 
   // ---------- tables ----------
+  let tablesReady = false;
+
   function initTables(){
     // Main records table (redacted)
     const cols = [
@@ -1164,6 +1166,13 @@
         { title: "Flags", field: "qc_count", width: 80, hozAlign: "right" },
         { title: "Details", field: "qc_list", minWidth: 260 },
       ]
+    });
+
+    Promise.all([state.table, state.qcMiniTable].map(table => new Promise(resolve => {
+      table.on("tableBuilt", resolve);
+    }))).then(() => {
+      tablesReady = true;
+      updateTables();
     });
 
     $("downloadTableBtn").addEventListener("click", () => {
@@ -1226,7 +1235,7 @@
   }
 
   function updateTables(){
-    if (!state.table || !state.qcMiniTable) return;
+    if (!tablesReady) return;
 
     const rows = buildTableRows(state.filtered);
     state.table.replaceData(rows);
@@ -1243,6 +1252,18 @@
   }
 
   // ---------- map ----------
+  function createBasemap(){
+    const key = document.querySelector('meta[name="carto-api-key"]')?.content.trim();
+    const style = isDark() ? "dark_all" : "light_all";
+    const query = key ? `?key=${encodeURIComponent(key)}` : "";
+    return L.tileLayer(`https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png${query}`, {
+      subdomains: "abcd",
+      maxZoom: 20,
+      detectRetina: true,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    });
+  }
+
   function initMap(){
     const mapEl = $("lebanonMap");
     if (!mapEl) return;
@@ -1261,12 +1282,7 @@
     L.control.scale({ position: "bottomright", imperial: false }).addTo(map);
 
     // Clean light basemap for public-facing dashboards.
-    state.map.base = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-      subdomains: "abcd",
-      maxZoom: 20,
-      detectRetina: true,
-      attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
-    }).addTo(map);
+    state.map.base = createBasemap().addTo(map);
 
     // Marker layers
     state.map.cluster = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 40 });
@@ -1307,6 +1323,8 @@
         if (target === "#pane-map"){
           setTimeout(() => map.invalidateSize(), 50);
         }
+        if (tablesReady && target === "#pane-records") state.table.redraw(true);
+        if (tablesReady && target === "#pane-quality") state.qcMiniTable.redraw(true);
       });
     });
   }
@@ -1844,15 +1862,7 @@ function escapeHtml(s){
     // Switch map tile layer
     if (state.map.base && state.map.map){
       state.map.map.removeLayer(state.map.base);
-      const url = dark
-        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-      state.map.base = L.tileLayer(url, {
-        subdomains: "abcd",
-        maxZoom: 20,
-        detectRetina: true,
-        attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
-      }).addTo(state.map.map);
+      state.map.base = createBasemap().addTo(state.map.map);
       // Ensure base stays behind everything
       state.map.base.bringToBack();
     }

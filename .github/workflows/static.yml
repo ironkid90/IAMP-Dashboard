@@ -33,11 +33,34 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: Prepare public site
+        env:
+          CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import html
+          import os
+          import shutil
+          from pathlib import Path
+
+          key = os.environ.get("CARTO_API_KEY", "").strip()
+          if not key:
+              raise SystemExit("Set the CARTO_API_KEY Actions secret before deploying.")
+          output = Path("_site")
+          output.mkdir(exist_ok=True)
+          shutil.copy2("index.html", output / "index.html")
+          shutil.copytree("hand_sharepoint_dashboard", output / "hand_sharepoint_dashboard", dirs_exist_ok=True)
+          entry = output / "hand_sharepoint_dashboard/index.html"
+          marker = '<meta name="carto-api-key" content="" />'
+          content = entry.read_text()
+          if content.count(marker) != 1:
+              raise SystemExit("Expected exactly one CARTO configuration placeholder.")
+          entry.write_text(content.replace(marker, '<meta name="carto-api-key" content="' + html.escape(key, quote=True) + '" />'))
+          PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          path: '_site'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
