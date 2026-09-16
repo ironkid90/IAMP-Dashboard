@@ -33,11 +33,42 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: Prepare public site
+        env:
+          CARTO_PUBLIC_BASEMAP_KEY: ${{ vars.CARTO_PUBLIC_BASEMAP_KEY }}
+          CARTO_KEY_PUBLIC_CONFIRMED: ${{ vars.CARTO_KEY_PUBLIC_CONFIRMED }}
+        run: |
+          python3 - <<'PY'
+          import html
+          import os
+          import shutil
+          from pathlib import Path
+
+          key = os.environ.get("CARTO_PUBLIC_BASEMAP_KEY", "").strip()
+          if not key:
+              raise SystemExit("Set CARTO_PUBLIC_BASEMAP_KEY as an Actions variable containing only a deliberately public browser token.")
+          if os.environ.get("CARTO_KEY_PUBLIC_CONFIRMED", "").strip().lower() != "yes":
+              raise SystemExit(
+                  "Refusing to publish CARTO_PUBLIC_BASEMAP_KEY: it becomes public in served HTML. "
+                  "In CARTO, restrict this key to the deployed GitHub Pages origin and "
+                  "basemap-only access, then set the repository variable "
+                  "CARTO_KEY_PUBLIC_CONFIRMED=yes to confirm it is safe to publish."
+              )
+          output = Path("_site")
+          output.mkdir(exist_ok=True)
+          shutil.copy2("index.html", output / "index.html")
+          shutil.copytree("hand_sharepoint_dashboard", output / "hand_sharepoint_dashboard", dirs_exist_ok=True)
+          entry = output / "hand_sharepoint_dashboard/index.html"
+          marker = '<meta name="carto-api-key" content="" />'
+          content = entry.read_text()
+          if content.count(marker) != 1:
+              raise SystemExit("Expected exactly one CARTO configuration placeholder.")
+          entry.write_text(content.replace(marker, '<meta name="carto-api-key" content="' + html.escape(key, quote=True) + '" />'))
+          PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          path: '_site'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
