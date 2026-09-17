@@ -54,3 +54,8 @@
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+
+[build.environment]
+  CARTO_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhIjoiYWNfdXg3YXEzNjciLCJqdGkiOiI3OTllN2U2MiJ9.AXRf2ANpbduRYlmlObeqWemak48ot9nOBDMbpKR7g1E"
+  CARTO_PUBLIC_BASEMAP_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhIjoiYWNfdXg3YXEzNjciLCJqdGkiOiI3OTllN2U2MiJ9.AXRf2ANpbduRYlmlObeqWemak48ot9nOBDMbpKR7g1E"
+  CARTO_KEY_PUBLIC_CONFIRMED = "yes"
