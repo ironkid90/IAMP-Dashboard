@@ -5,7 +5,6 @@
   publish = "_site"
 
 [build.environment]
-  CARTO_PUBLIC_BASEMAP_KEY = "cb1_3o1s_1_928823fbaca6c714134db44d"
   CARTO_KEY_PUBLIC_CONFIRMED = "yes"
 
 # Redirect root to the dashboard
