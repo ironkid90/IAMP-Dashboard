@@ -1,8 +1,8 @@
 # Netlify configuration for IAMP Dashboard
-# The site is a static build – no build command needed.
 
 [build]
-  publish = "."
+  command = "python3 tools/build_public_site.py"
+  publish = "_site"
 
 # Redirect root to the dashboard
 [[redirects]]
@@ -10,21 +10,20 @@
   to = "/hand_sharepoint_dashboard/"
   status = 302
 
-# Cache static assets aggressively (JS, CSS, images)
 [[headers]]
   for = "/hand_sharepoint_dashboard/assets/css/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/hand_sharepoint_dashboard/assets/js/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/hand_sharepoint_dashboard/assets/img/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 # TopoJSON/JSON data – cache for 1 hour, allow revalidation
 [[headers]]
@@ -41,12 +40,12 @@
 [[headers]]
   for = "/*.html"
   [headers.values]
-    Cache-Control = "public, max-age=300, stale-while-revalidate=3600"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/hand_sharepoint_dashboard/"
   [headers.values]
-    Cache-Control = "public, max-age=300, stale-while-revalidate=3600"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 # Security headers
 [[headers]]
